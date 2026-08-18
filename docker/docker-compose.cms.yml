@@ -1,0 +1,18 @@
+services:
+  koharu-cms:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cms
+    image: astro-koharu-cms:latest
+    container_name: koharu-cms
+    ports:
+      - "0.0.0.0:8082:4322"
+    volumes:
+      - ..:/app
+      - /app/cms/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - CMS_REBUILD_BLOG_ON_DELETE=true
+      - CMS_HOST_PROJECT_ROOT=/opt/blog/astro-koharu
+    working_dir: /app/cms
+    restart: unless-stopped

@@ -1,0 +1,187 @@
+﻿site:
+  title: 我的博客
+  alternate: My Blog
+  subtitle: 记录、思考与分享
+  name: 你的名字
+  description: 一个简洁、快速、可持续维护的个人博客
+  avatar: /img/avatar.svg
+  showLogo: true
+  author: 你的名字
+  url: https://your-site.pages.dev
+  defaultOgImage: /img/cover/10.webp
+  startYear: 2026
+  timezone: Asia/Shanghai
+  keywords:
+    - 博客
+    - Astro
+    - 技术
+    - 网站推荐
+i18n:
+  defaultLocale: zh
+  locales:
+    - code: zh
+      label: 中文
+    - code: en
+      label: English
+    - code: ja
+      label: 日本語
+categoryMap:
+  随笔: life
+  笔记: note
+  工具: tools
+  网站推荐: websites
+  周刊: weekly
+featuredCategories:
+  - link: life
+    label: 随笔
+    image: /img/cover/2.webp
+    description: 生活记录、随想随笔
+  - link: note
+    label: 笔记
+    image: /img/cover/4.webp
+    description: 技术笔记、学习笔记
+  - link: tools
+    label: 工具
+    image: /img/cover/11.webp
+    description: 工具使用、效率提升
+  - link: websites
+    label: 网站推荐
+    image: /img/cover/12.webp
+    description: 值得收藏的网站、工具与服务推荐
+featuredSeries:
+  - slug: weekly
+    categoryName: 周刊
+    label: 我的周刊
+    fullName: 我的技术周刊
+    description: 记录博客更新、技术实践和阶段性整理。
+    cover: /img/weekly_header.webp
+    enabled: true
+    icon: ri:newspaper-line
+    highlightOnHome: true
+    links:
+      rss: /rss.xml
+social:
+  rss:
+    url: /rss.xml
+    icon: ri:rss-line
+    color: '#ff6600'
+friends:
+  intro:
+    title: 友情链接
+    subtitle: 欢迎交换友链！
+    applyTitle: 申请友链
+    applyDesc: 请在本页留言，格式如下
+    exampleYaml: |
+      - site: 你的博客名称 # 站点名称
+        url: https://your-blog.com/ # 站点网址
+        owner: 你的昵称 # 昵称
+        desc: 站点简介 # 站点简介
+        image: https://your-blog.com/avatar.jpg # 头像链接
+        color: "#ffc0cb" # 主题色（可选）
+  data:
+    []
+announcements: []
+content:
+  addBlankTarget: true
+  smoothScroll: true
+  addHeadingLevel: true
+  enhanceCodeBlock: true
+  enableCodeCopy: true
+  enableCodeFullscreen: true
+  enableLinkEmbed: true
+  enableCodePenEmbed: true
+  enableTweetEmbed: true
+  enableOGPreview: true
+  previewCacheTime: 30
+  lazyLoadEmbeds: true
+  postCardImagePosition: alternating
+  enableShokaContainers: true
+  enableShokaAttrs: true
+  enableShokaEffects: true
+  enableShokaSpoiler: true
+  enableShokaRuby: true
+  enableShokaHexoTags: true
+  enableMath: true
+  enableCodeMeta: true
+  enableQuiz: true
+  enableEncryptedBlock: true
+navigation:
+  - name: 首页
+    nameKey: nav.home
+    path: /
+    icon: ri:home-heart-fill
+  - name: 周刊
+    nameKey: nav.weekly
+    path: /weekly
+    icon: ri:newspaper-line
+  - name: 文章
+    nameKey: nav.posts
+    icon: ri:quill-pen-ai-fill
+    children:
+      - name: 分类
+        nameKey: nav.categories
+        path: /categories
+        icon: ri:grid-fill
+      - name: 标签
+        nameKey: nav.tags
+        path: /tags
+        icon: fa6-solid:tags
+      - name: 归档
+        nameKey: nav.archives
+        path: /archives
+        icon: ri:archive-2-fill
+  - name: 友链
+    nameKey: nav.friends
+    path: /friends
+    icon: ri:links-line
+  - name: 关于
+    nameKey: nav.about
+    path: /about
+    icon: fa6-regular:circle-user
+comment:
+  provider: none
+  remark42: {}
+  giscus: {}
+  waline:
+    imageUploader: true
+    highlighter: true
+    texRenderer: true
+    search: true
+    noCopyright: false
+    comment: true
+    pageview: true
+  twikoo:
+    envId: ''
+analytics:
+  umami:
+    enabled: false
+    id: ''
+    endpoint: ''
+    statistics_display:
+      article_page_views: false
+      footer_site_stats: false
+seo:
+  robots:
+    policy: []
+bgm:
+  enabled: false
+  audio: []
+christmas:
+  enabled: false
+dev:
+  localProjectPath: /Users/yourname/path/to/astro-koharu
+  contentRelativePath: src/content/blog
+  editors:
+    - id: vscode
+      name: VS Code
+      icon: devicon-plain:vscode
+      urlTemplate: vscode://file/{path}
+    - id: cursor
+      name: Cursor
+      icon: simple-icons:cursor
+      urlTemplate: cursor://file/{path}
+    - id: zed
+      name: Zed
+      icon: simple-icons:zedindustries
+      urlTemplate: zed://file/{path}
+

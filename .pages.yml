@@ -1,0 +1,64 @@
+media:
+  - name: images
+    label: 图片
+    input: public/img
+    output: /img
+    categories: [image]
+    rename: safe
+
+content:
+  - name: blog
+    label: 文章
+    type: collection
+    path: src/content/blog
+    format: yaml-frontmatter
+    filename: "{year}-{month}-{day}-{primary}.md"
+    view:
+      fields: [title, date, categories, draft]
+      primary: title
+      sort: date
+      sort_order: desc
+    fields:
+      - name: title
+        label: 标题
+        type: string
+        required: true
+      - name: description
+        label: 摘要
+        type: text
+      - name: date
+        label: 发布时间
+        type: date
+        required: true
+      - name: updated
+        label: 修改时间
+        type: date
+      - name: categories
+        label: 分类
+        type: string
+        list: true
+      - name: tags
+        label: 标签
+        type: string
+        list: true
+      - name: cover
+        label: 封面图片
+        type: image
+        options:
+          media: images
+      - name: sticky
+        label: 置顶
+        type: boolean
+      - name: draft
+        label: 草稿
+        type: boolean
+      - name: catalog
+        label: 显示目录
+        type: boolean
+        default: true
+      - name: body
+        label: 正文
+        type: rich-text
+        options:
+          media: images
+          format: markdown

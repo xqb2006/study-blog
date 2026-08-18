@@ -1,0 +1,20 @@
+﻿{
+  "updatedAt": "2026-08-18T00:00:00.000Z",
+  "site": {
+    "title": "我的博客",
+    "alternate": "My Blog",
+    "subtitle": "记录、思考与分享",
+    "name": "你的名字",
+    "description": "一个简洁、快速、可持续维护的个人博客",
+    "avatar": "/img/avatar.svg",
+    "author": "你的名字",
+    "url": "https://your-site.pages.dev"
+  },
+  "social": {
+    "rss": {
+      "url": "/rss.xml",
+      "icon": "ri:rss-line",
+      "color": "#ff6600"
+    }
+  }
+}

@@ -1,0 +1,241 @@
+/**
+ * Dashboard State Hook
+ *
+ * Manages dashboard navigation, post data, filters, sorting, and article actions.
+ */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { deletePost, getCMSConfig, listPosts, toggleDraft, toggleSticky } from '@/lib/api';
+import { buildEditorUrl, buildFilePath, getDefaultEditor } from '@/lib/editor-url';
+import type { BuildSyncSummary, ListPostsResponse } from '@/types';
+
+export type Tab =
+  | 'overview'
+  | 'posts'
+  | 'settings'
+  | 'taxonomy'
+  | 'operations'
+  | 'friends'
+  | 'announcements'
+  | 'bgm'
+  | 'media'
+  | 'trash'
+  | 'build';
+export type StatusFilter = 'all' | 'draft' | 'published';
+export type SortField = 'date' | 'updated' | 'title';
+export type SortOrder = 'asc' | 'desc';
+
+export interface UseDashboardStateResult {
+  activeTab: Tab;
+  setActiveTab: (tab: Tab) => void;
+  data: ListPostsResponse | null;
+  isLoading: boolean;
+  error: string | null;
+  isCreateDialogOpen: boolean;
+  setIsCreateDialogOpen: (open: boolean) => void;
+  editingPostId: string | null;
+  search: string;
+  setSearch: (search: string) => void;
+  category: string;
+  setCategory: (category: string) => void;
+  status: StatusFilter;
+  setStatus: (status: StatusFilter) => void;
+  sortField: SortField;
+  sortOrder: SortOrder;
+  fetchData: () => Promise<void>;
+  handleSort: (field: SortField) => void;
+  handleToggleDraft: (postId: string) => Promise<void>;
+  handleToggleSticky: (postId: string) => Promise<void>;
+  handleDeletePost: (postId: string, title: string) => Promise<void>;
+  handleCreatePostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
+  handleImportPostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
+  handleEditPost: (postId: string) => void;
+  handleOpenInEditor: (postId: string) => void;
+  handleEditorClose: () => void;
+  handleEditorSaved: () => void;
+}
+
+export function useDashboardState(): UseDashboardStateResult {
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [data, setData] = useState<ListPostsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [projectRoot, setProjectRoot] = useState('');
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+  const params = useMemo(
+    () => ({
+      search: search || undefined,
+      category: category || undefined,
+      status: status === 'all' ? undefined : status,
+      sort: sortField,
+      order: sortOrder,
+    }),
+    [search, category, status, sortField, sortOrder],
+  );
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await listPosts(params);
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '加载文章失败');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    getCMSConfig()
+      .then((config) => setProjectRoot(config.projectRoot))
+      .catch((err) => console.error('加载 CMS 配置失败:', err));
+  }, []);
+
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (field === sortField) {
+        setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortField(field);
+        setSortOrder('desc');
+      }
+    },
+    [sortField],
+  );
+
+  const handleToggleDraft = useCallback(
+    async (postId: string) => {
+      try {
+        const result = await toggleDraft(postId);
+        toast.success(`${result.draft ? '已设为草稿' : '已发布文章'}；${result.buildSync?.message || '发布同步已请求'}`);
+        if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
+        fetchData();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : '切换草稿状态失败');
+      }
+    },
+    [fetchData],
+  );
+
+  const handleToggleSticky = useCallback(
+    async (postId: string) => {
+      try {
+        const result = await toggleSticky(postId);
+        toast.success(`${result.sticky ? '文章已置顶' : '已取消置顶'}；${result.buildSync?.message || '发布同步已请求'}`);
+        if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
+        fetchData();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : '切换置顶状态失败');
+      }
+    },
+    [fetchData],
+  );
+
+  const handleDeletePost = useCallback(
+    async (postId: string, title: string) => {
+      const confirmed = window.confirm(`确定要删除《${title}》吗？文章会移入回收站，博客前台将不再展示。`);
+      if (!confirmed) return;
+
+      try {
+        const result = await deletePost(postId);
+        toast.success(`文章已移入回收站；${result.buildSync?.message || '发布同步已请求'}`);
+        if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
+        fetchData();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : '删除文章失败');
+      }
+    },
+    [fetchData],
+  );
+
+  const handleCreatePostSuccess = useCallback(
+    (postId: string, buildSync?: BuildSyncSummary) => {
+      toast.success(`文章创建成功；${buildSync?.message || '发布同步已请求'}`);
+      if (buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: buildSync }));
+      setIsCreateDialogOpen(false);
+      setEditingPostId(postId);
+      fetchData();
+    },
+    [fetchData],
+  );
+
+  const handleImportPostSuccess = useCallback(
+    (postId: string, buildSync?: BuildSyncSummary) => {
+      toast.success(`Markdown 已导入；${buildSync?.message || '发布同步已请求'}`);
+      if (buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: buildSync }));
+      setEditingPostId(postId);
+      fetchData();
+    },
+    [fetchData],
+  );
+
+  const handleEditPost = useCallback((postId: string) => {
+    setEditingPostId(postId);
+  }, []);
+
+  const handleOpenInEditor = useCallback(
+    (postId: string) => {
+      if (!projectRoot) {
+        toast.error('项目路径还没有加载完成，请稍后重试。');
+        return;
+      }
+
+      const editor = getDefaultEditor();
+      const filePath = buildFilePath(projectRoot, postId);
+      const url = buildEditorUrl(editor, filePath);
+      window.open(url, '_blank');
+    },
+    [projectRoot],
+  );
+
+  const handleEditorClose = useCallback(() => {
+    setEditingPostId(null);
+  }, []);
+
+  const handleEditorSaved = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return {
+    activeTab,
+    setActiveTab,
+    data,
+    isLoading,
+    error,
+    isCreateDialogOpen,
+    setIsCreateDialogOpen,
+    editingPostId,
+    search,
+    setSearch,
+    category,
+    setCategory,
+    status,
+    setStatus,
+    sortField,
+    sortOrder,
+    fetchData,
+    handleSort,
+    handleToggleDraft,
+    handleToggleSticky,
+    handleDeletePost,
+    handleCreatePostSuccess,
+    handleImportPostSuccess,
+    handleEditPost,
+    handleOpenInEditor,
+    handleEditorClose,
+    handleEditorSaved,
+  };
+}
