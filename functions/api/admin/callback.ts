@@ -26,12 +26,26 @@ export const onRequestGet = async (context: any) => {
   } catch {
     tokenData = Object.fromEntries(new URLSearchParams(tokenText));
   }
-  if (!tokenData.access_token) return new Response('GitHub 登录失败，请检查 OAuth App 配置后重试。', { status: 401 });
+  if (!tokenResponse.ok || !tokenData.access_token) {
+    console.error('[admin] GitHub OAuth token exchange failed:', tokenResponse.status, tokenText.slice(0, 300));
+    return new Response('GitHub 登录失败，请检查 OAuth App 的 Client ID、Client Secret 和回调地址。', { status: 401 });
+  }
 
   const userResponse = await fetch('https://api.github.com/user', {
     headers: { accept: 'application/vnd.github+json', authorization: `Bearer ${tokenData.access_token}` },
   });
-  const user = (await userResponse.json()) as any;
+  const userText = await userResponse.text();
+  let user: any;
+  try {
+    user = JSON.parse(userText);
+  } catch {
+    console.error('[admin] GitHub user request returned non-JSON:', userResponse.status, userText.slice(0, 300));
+    return new Response('GitHub 用户信息读取失败，请稍后重试。', { status: 502 });
+  }
+  if (!userResponse.ok) {
+    console.error('[admin] GitHub user request failed:', userResponse.status, user.message ?? userText.slice(0, 300));
+    return new Response('GitHub 用户信息读取失败，请稍后重试。', { status: 502 });
+  }
   if (user.login !== 'xqb2006') return new Response('此账号没有博客管理权限。', { status: 403 });
 
   const response = redirect(new URL('/admin', context.request.url).toString());
