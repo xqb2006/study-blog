@@ -11,7 +11,6 @@ import { Toaster } from 'sonner';
 import {
   AnnouncementsPanel,
   BgmPanel,
-  BuildStatusPanel,
   CategoryStats,
   CreatePostDialog,
   ErrorFallback,
@@ -24,7 +23,6 @@ import {
   RecentUpdates,
   SiteSettingsPanel,
   TaxonomyPanel,
-  TrashPanel,
 } from '@/components';
 import { AmbientCanvas } from '@/components/AmbientCanvas';
 import { Button } from '@/components/ui/button';
@@ -55,12 +53,7 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { id: 'settings', label: '站点装扮', icon: 'palette', description: '身份外观' },
       { id: 'operations', label: '运营设置', icon: 'wand-2', description: '评论统计' },
-      { id: 'build', label: '发布同步', icon: 'settings', description: '同步状态' },
     ],
-  },
-  {
-    label: '系统',
-    items: [{ id: 'trash', label: '回收站', icon: 'history', description: '删除恢复' }],
   },
 ];
 
@@ -73,8 +66,6 @@ const TAB_FALLBACKS: Record<Tab, { label: string; description: string }> = {
   taxonomy: { label: '分类花园', description: '内容结构' },
   settings: { label: '站点装扮', description: '身份外观' },
   operations: { label: '运营设置', description: '评论统计' },
-  build: { label: '发布同步', description: '同步状态' },
-  trash: { label: '回收站', description: '删除恢复' },
   friends: { label: '友链管理', description: '朋友站点' },
   announcements: { label: '公告管理', description: '站点公告' },
   bgm: { label: '音乐设置', description: '背景音乐' },
@@ -168,7 +159,6 @@ function AppContent() {
     handleCreatePostSuccess,
     handleImportPostSuccess,
     handleEditPost,
-    handleOpenInEditor,
     handleEditorClose,
     handleEditorSaved,
   } = useDashboardState();
@@ -251,7 +241,6 @@ function AppContent() {
   };
 
   const statCards = [
-    { label: '发布同步', value: buildLabel, delta: buildStatus?.distUpdatedAt ? `dist ${formatSyncTime(buildStatus.distUpdatedAt)}` : '查看同步状态', icon: buildMeta.icon, tone: buildStatus?.lastResult === 'failed' ? 'rose' : 'violet', action: () => setActiveTab('build') },
     { label: 'Runtime Sync', value: runtimeSync?.success ? '已生成' : '待生成', delta: runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : '资料即时同步', icon: 'flashlight', tone: 'blue', action: () => setActiveTab('settings') },
     { label: '总文章数', value: formatCount(totalPosts), delta: '打开文章书房', icon: 'file-text', tone: 'cyan', action: () => openPostsView('all') },
     { label: '草稿箱', value: formatCount(draftPosts), delta: '查看草稿文章', icon: 'draft', tone: 'purple', action: () => openPostsView('draft') },
@@ -262,7 +251,6 @@ function AppContent() {
     { label: '导入 Markdown', description: '上传文档或粘贴公开链接', icon: 'file-up', action: () => setIsImportDialogOpen(true) },
     { label: '上传素材', description: '进入素材库上传图片', icon: 'image-plus', action: () => setActiveTab('media') },
     { label: '修改装扮', description: '同步头像、社交链接和站点信息', icon: 'palette', action: () => setActiveTab('settings') },
-    { label: '发布同步', description: '查看或重新同步 Public Blog', icon: 'rocket', action: () => setActiveTab('build') },
     { label: '查看博客', description: '打开 Public Blog 新窗口', icon: 'external-link', action: () => window.open(blogProfile.url, '_blank', 'noopener,noreferrer') },
   ];
 
@@ -445,7 +433,7 @@ function AppContent() {
                                 </div>
                               </div>
                               <div className="sakura-sync-grid">
-                                <button type="button" onClick={() => setActiveTab('build')}>
+                                <button type="button" onClick={() => window.open(blogProfile.url, '_blank', 'noopener,noreferrer')}>
                                   <span>Build Sync</span>
                                   <strong>{buildLabel}</strong>
                                   <small>{buildStatus?.distUpdatedAt ? `dist ${formatSyncTime(buildStatus.distUpdatedAt)}` : '暂无 dist 时间'}</small>
@@ -460,14 +448,14 @@ function AppContent() {
                                   <strong>打开检查</strong>
                                   <small>{blogProfile.url}</small>
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('build')}>
+                                <button type="button" onClick={() => setActiveTab('settings')}>
                                   <span>日志</span>
                                   <strong>{buildStatus?.log?.trim() ? '可查看' : '暂无日志'}</strong>
                                   <small>{buildStatus?.logPath || '.cache/cms/rebuild-blog.log'}</small>
                                 </button>
                               </div>
                               {buildStatus?.lastResult === 'failed' && (
-                                <button type="button" className="sakura-sync-warning" onClick={() => setActiveTab('build')}>
+                                <button type="button" className="sakura-sync-warning" onClick={() => setActiveTab('settings')}>
                                   <AppIcon name="alert-triangle" className="size-4" />
                                   内容已保存，但 Public Blog 上次同步失败。打开发布同步查看日志。
                                 </button>
@@ -622,7 +610,6 @@ function AppContent() {
                         onToggleSticky={handleToggleSticky}
                         onDelete={handleDeletePost}
                         onEdit={handleEditPost}
-                        onOpenInEditor={handleOpenInEditor}
                       />
                     )}
                   </div>
@@ -650,8 +637,6 @@ function AppContent() {
                         {activeTab === 'announcements' && <AnnouncementsPanel />}
                         {activeTab === 'bgm' && <BgmPanel />}
                         {activeTab === 'media' && <MediaLibraryPanel />}
-                        {activeTab === 'trash' && <TrashPanel />}
-                        {activeTab === 'build' && <BuildStatusPanel />}
                       </div>
                     )}
                   </div>

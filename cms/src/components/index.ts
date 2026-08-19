@@ -30,4 +30,3 @@ export { PostTable } from './PostTable';
 export { RecentUpdates } from './RecentUpdates';
 export { SiteSettingsPanel } from './SiteSettingsPanel';
 export { TaxonomyPanel } from './TaxonomyPanel';
-export { TrashPanel } from './TrashPanel';

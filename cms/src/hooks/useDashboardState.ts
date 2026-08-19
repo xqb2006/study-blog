@@ -6,8 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { deletePost, getCMSConfig, listPosts, toggleDraft, toggleSticky } from '@/lib/api';
-import { buildEditorUrl, buildFilePath, getDefaultEditor } from '@/lib/editor-url';
+import { deletePost, listPosts, toggleDraft, toggleSticky } from '@/lib/api';
 import type { BuildSyncSummary, ListPostsResponse } from '@/types';
 
 export type Tab =
@@ -19,9 +18,7 @@ export type Tab =
   | 'friends'
   | 'announcements'
   | 'bgm'
-  | 'media'
-  | 'trash'
-  | 'build';
+  | 'media';
 export type StatusFilter = 'all' | 'draft' | 'published';
 export type SortField = 'date' | 'updated' | 'title';
 export type SortOrder = 'asc' | 'desc';
@@ -51,7 +48,6 @@ export interface UseDashboardStateResult {
   handleCreatePostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
   handleImportPostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
   handleEditPost: (postId: string) => void;
-  handleOpenInEditor: (postId: string) => void;
   handleEditorClose: () => void;
   handleEditorSaved: () => void;
 }
@@ -63,7 +59,6 @@ export function useDashboardState(): UseDashboardStateResult {
   const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [projectRoot, setProjectRoot] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -97,12 +92,6 @@ export function useDashboardState(): UseDashboardStateResult {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  useEffect(() => {
-    getCMSConfig()
-      .then((config) => setProjectRoot(config.projectRoot))
-      .catch((err) => console.error('加载 CMS 配置失败:', err));
-  }, []);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -186,21 +175,6 @@ export function useDashboardState(): UseDashboardStateResult {
     setEditingPostId(postId);
   }, []);
 
-  const handleOpenInEditor = useCallback(
-    (postId: string) => {
-      if (!projectRoot) {
-        toast.error('项目路径还没有加载完成，请稍后重试。');
-        return;
-      }
-
-      const editor = getDefaultEditor();
-      const filePath = buildFilePath(projectRoot, postId);
-      const url = buildEditorUrl(editor, filePath);
-      window.open(url, '_blank');
-    },
-    [projectRoot],
-  );
-
   const handleEditorClose = useCallback(() => {
     setEditingPostId(null);
   }, []);
@@ -234,7 +208,6 @@ export function useDashboardState(): UseDashboardStateResult {
     handleCreatePostSuccess,
     handleImportPostSuccess,
     handleEditPost,
-    handleOpenInEditor,
     handleEditorClose,
     handleEditorSaved,
   };
