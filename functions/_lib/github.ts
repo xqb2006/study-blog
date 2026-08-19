@@ -102,6 +102,7 @@ async function githubFetch(context: any, path: string, init: RequestInit = {}): 
     headers: {
       accept: 'application/vnd.github+json',
       authorization: `Bearer ${session?.access_token ?? env(context, 'GITHUB_TOKEN')}`,
+      'user-agent': 'study-blog-admin',
       'x-github-api-version': '2022-11-28',
       ...(init.headers ?? {}),
     },

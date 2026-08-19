@@ -32,7 +32,12 @@ export const onRequestGet = async (context: any) => {
   }
 
   const userResponse = await fetch('https://api.github.com/user', {
-    headers: { accept: 'application/vnd.github+json', authorization: `Bearer ${tokenData.access_token}` },
+    headers: {
+      accept: 'application/vnd.github+json',
+      authorization: `Bearer ${tokenData.access_token}`,
+      'user-agent': 'study-blog-admin',
+      'x-github-api-version': '2022-11-28',
+    },
   });
   const userText = await userResponse.text();
   let user: any;
