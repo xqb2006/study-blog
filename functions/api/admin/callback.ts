@@ -8,13 +8,25 @@ export const onRequestGet = async (context: any) => {
     return new Response('登录验证失败，请重新登录。', { status: 400 });
   }
 
+  const callback = new URL('/api/admin/callback', context.request.url).toString();
   const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
-    headers: { accept: 'application/json', 'content-type': 'application/json' },
-    body: JSON.stringify({ client_id: env(context, 'GITHUB_CLIENT_ID'), client_secret: env(context, 'GITHUB_CLIENT_SECRET'), code }),
+    headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: env(context, 'GITHUB_CLIENT_ID'),
+      client_secret: env(context, 'GITHUB_CLIENT_SECRET'),
+      code,
+      redirect_uri: callback,
+    }),
   });
-  const tokenData = (await tokenResponse.json()) as any;
-  if (!tokenData.access_token) return new Response('GitHub 登录失败。', { status: 401 });
+  const tokenText = await tokenResponse.text();
+  let tokenData: any;
+  try {
+    tokenData = JSON.parse(tokenText);
+  } catch {
+    tokenData = Object.fromEntries(new URLSearchParams(tokenText));
+  }
+  if (!tokenData.access_token) return new Response('GitHub 登录失败，请检查 OAuth App 配置后重试。', { status: 401 });
 
   const userResponse = await fetch('https://api.github.com/user', {
     headers: { accept: 'application/vnd.github+json', authorization: `Bearer ${tokenData.access_token}` },
