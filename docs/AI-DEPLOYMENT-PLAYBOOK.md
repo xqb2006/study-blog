@@ -282,4 +282,25 @@ OAuth callback URL
 7. 推送前检查 `git status` 和 `git diff`，不要提交无关文件。
 8. 不执行删除仓库、重置分支、删除部署等破坏性操作，除非用户明确确认。
 9. 最终汇报修改文件、验证结果、部署提交号和用户下一步操作。
+## Git 同步策略（重要）
 
+本项目存在两个会修改 `main` 的来源：网页 CMS 会通过 GitHub API 提交文章、设置和图片；AI/本地开发会提交源代码。因此，AI 修改代码前必须先同步远程仓库，不能假设本地分支是最新的。
+
+推荐流程：
+
+```powershell
+& 'F:\app\Git\cmd\git.exe' -c http.version=HTTP/1.1 fetch origin main
+& 'F:\app\Git\cmd\git.exe' rebase origin/main
+& 'F:\app\Git\cmd\git.exe' -c http.version=HTTP/1.1 push origin main
+```
+
+规则：
+
+- CMS 继续直接提交 `main`，因为 Cloudflare Pages 监听 `main` 自动部署。
+- AI 开发前先执行 `fetch`，发现远程有新提交时先 `rebase`，再修改代码或推送。
+- 代码开发优先使用独立分支并通过 Pull Request 合并，避免覆盖 CMS 产生的内容提交。
+- 禁止使用 `git push --force`，不得覆盖网页端产生的文章、图片和设置提交。
+- 当前网络对 Git 默认连接可能不稳定，推送统一优先使用 `http.version=HTTP/1.1`。
+- 上传图片会产生独立 Git 提交；批量上传可以减少提交数量，但不能省略同步步骤。
+
+CMS 当前只提供适合 GitHub + Cloudflare 架构的功能：文章编辑、Markdown 导入、站点配置、分类配置、图片上传/浏览/删除。不可恢复的回收站、本地编辑器跳转和手动本地构建入口不再提供。
