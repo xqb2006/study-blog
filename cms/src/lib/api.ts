@@ -447,57 +447,6 @@ export async function deleteMedia(publicPath: string): Promise<DeleteMediaRespon
 }
 
 /**
- * Lists soft-deleted image assets from the CMS media trash.
- */
-export async function listMediaTrash(): Promise<MediaTrashListResponse> {
-  const response = await fetch('/api/cms/media/trash');
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to list media trash: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Restores a soft-deleted image asset back into public/img.
- */
-export async function restoreMedia(trashPath: string): Promise<RestoreMediaResponse> {
-  const response = await fetch('/api/cms/media/trash/restore', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ trashPath }),
-  });
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to restore media: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Permanently removes a soft-deleted image asset from the CMS media trash.
- */
-export async function purgeMedia(trashPath: string): Promise<PurgeMediaResponse> {
-  const response = await fetch('/api/cms/media/trash/purge', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ trashPath }),
-  });
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to purge media: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
  * Reads current blog build status and recent build log.
  */
 export async function getBuildStatus(): Promise<BuildStatusResponse> {
