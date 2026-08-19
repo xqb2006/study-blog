@@ -54,7 +54,7 @@ async function hmac(secret: string, value: string): Promise<string> {
 }
 
 export async function createSession(context: any, user: SessionUser, accessToken: string): Promise<string> {
-  const payload = btoa(JSON.stringify({ user: { login: user.login, avatar_url: user.avatar_url, name: user.name }, token: accessToken, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }))
+  const payload = encodeBase64(JSON.stringify({ user: { login: user.login, avatar_url: user.avatar_url, name: user.name }, token: accessToken, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
@@ -69,7 +69,7 @@ export async function readSession(context: any, request: Request): Promise<Sessi
   const expected = await hmac(env(context, 'SESSION_SECRET'), payload);
   if (signature !== expected) return null;
   try {
-    const data = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    const data = JSON.parse(decodeBase64(payload));
     if (data.exp < Date.now() || data.user?.login !== OWNER) return null;
     return { ...data.user, access_token: data.token };
   } catch {
