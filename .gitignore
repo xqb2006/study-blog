@@ -1,5 +1,6 @@
 ﻿# build output
 dist/
+public/admin/
 .sonda/
 
 # generated types

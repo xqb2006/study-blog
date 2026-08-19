@@ -48,7 +48,7 @@ export const onRequestGet = async (context: any) => {
   }
   if (user.login !== 'xqb2006') return new Response('此账号没有博客管理权限。', { status: 403 });
 
-  const response = redirect(new URL('/admin', context.request.url).toString());
+  const response = redirect(new URL('/admin/', context.request.url).toString());
   response.headers.append('set-cookie', cookieHeader('admin_session', await createSession(context, user, tokenData.access_token), 7 * 24 * 60 * 60));
   response.headers.append('set-cookie', clearCookieHeader('admin_oauth_state'));
   return response;

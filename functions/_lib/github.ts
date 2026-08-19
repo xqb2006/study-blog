@@ -116,8 +116,15 @@ export async function getFile(context: any, filePath: string): Promise<{ content
 }
 
 export async function listPostFiles(context: any): Promise<any[]> {
-  const files = await githubFetch(context, `/contents/src/content/blog?ref=${BRANCH}`);
-  return (files as any[]).filter((file) => file.type === 'file' && /\.mdx?$/.test(file.name));
+  return listRepositoryFiles(context, 'src/content/blog', /\.mdx?$/);
+}
+
+export async function listRepositoryFiles(context: any, directory: string, matcher?: RegExp): Promise<{ path: string; size: number; sha: string }[]> {
+  const data = await githubFetch(context, `/git/trees/${BRANCH}?recursive=1`);
+  const prefix = directory.replace(/^\/+|\/+$/g, '') + '/';
+  return (data.tree as { path: string; type: string; size?: number; sha: string }[])
+    .filter((file) => file.type === 'blob' && file.path.startsWith(prefix) && (!matcher || matcher.test(file.path)))
+    .map((file) => ({ path: file.path, size: file.size ?? 0, sha: file.sha }));
 }
 
 export function parseMarkdown(source: string): { frontmatter: Record<string, unknown>; content: string } {
@@ -135,6 +142,14 @@ export async function putFile(context: any, filePath: string, content: string, m
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ message, content: encodeBase64(content), branch: BRANCH, ...(sha ? { sha } : {}) }),
+  });
+}
+
+export async function putBase64File(context: any, filePath: string, base64Content: string, message: string, sha?: string) {
+  return githubFetch(context, `/contents/${filePath}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ message, content: base64Content, branch: BRANCH, ...(sha ? { sha } : {}) }),
   });
 }
 
