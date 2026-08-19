@@ -453,6 +453,7 @@ export interface SaveSiteSettingsResponse {
 export interface MediaFile {
   name: string;
   publicPath: string;
+  previewUrl?: string;
   relativePath: string;
   size: number;
   modifiedAt: string;
