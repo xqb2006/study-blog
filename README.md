@@ -370,3 +370,4 @@ comment:
 
 GNU Affero General Public License version 3 (AGPL-3.0)
 
+网页后台配置说明：`docs/WEB-ADMIN-SETUP.md`
