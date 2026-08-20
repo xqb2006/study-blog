@@ -1,12 +1,12 @@
-﻿site:
-  title: 我的博客
+site:
+  title: Giao的博客
   alternate: My Blog
   subtitle: 记录、思考与分享
   name: 你的名字
   description: 一个简洁、快速、可持续维护的个人博客
-  avatar: /img/avatar.svg
+  avatar: /img/cms-uploads/头像.jpg
   showLogo: true
-  author: 你的名字
+  author: Giao
   url: https://your-site.pages.dev
   defaultOgImage: /img/cover/10.webp
   startYear: 2026
@@ -64,7 +64,7 @@ social:
   rss:
     url: /rss.xml
     icon: ri:rss-line
-    color: '#ff6600'
+    color: "#ff6600"
 friends:
   intro:
     title: 友情链接
@@ -78,8 +78,7 @@ friends:
         desc: 站点简介 # 站点简介
         image: https://your-blog.com/avatar.jpg # 头像链接
         color: "#ffc0cb" # 主题色（可选）
-  data:
-    []
+  data: []
 announcements: []
 content:
   addBlankTarget: true
@@ -92,9 +91,7 @@ content:
   enableCodePenEmbed: true
   enableTweetEmbed: true
   enableOGPreview: true
-  previewCacheTime: 30
   lazyLoadEmbeds: true
-  postCardImagePosition: alternating
   enableShokaContainers: true
   enableShokaAttrs: true
   enableShokaEffects: true
@@ -105,6 +102,8 @@ content:
   enableCodeMeta: true
   enableQuiz: true
   enableEncryptedBlock: true
+  previewCacheTime: 30
+  postCardImagePosition: alternating
 navigation:
   - name: 首页
     nameKey: nav.home
@@ -151,12 +150,12 @@ comment:
     comment: true
     pageview: true
   twikoo:
-    envId: ''
+    envId: ""
 analytics:
   umami:
     enabled: false
-    id: ''
-    endpoint: ''
+    id: ""
+    endpoint: ""
     statistics_display:
       article_page_views: false
       footer_site_stats: false
@@ -184,4 +183,3 @@ dev:
       name: Zed
       icon: simple-icons:zedindustries
       urlTemplate: zed://file/{path}
-
