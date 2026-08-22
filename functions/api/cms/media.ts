@@ -1,9 +1,8 @@
 import { errorMessage } from '../../_lib/cms';
-import { json, listRepositoryFiles, requireSession } from '../../_lib/github';
+import { githubRawFileUrl, json, listRepositoryFiles, requireSession } from '../../_lib/github';
 
 const MEDIA_ROOT = 'public/img';
 const IMAGE_FILE = /\.(avif|gif|jpe?g|png|svg|webp)$/i;
-const RAW_BASE = 'https://raw.githubusercontent.com/xqb2006/study-blog/main/';
 
 export const onRequestGet = async (context: any) => {
   try {
@@ -15,7 +14,7 @@ export const onRequestGet = async (context: any) => {
       files: files.map((file) => ({
         name: file.path.split('/').pop(),
         publicPath: file.path.replace(/^public/, ''),
-        previewUrl: `${RAW_BASE}${file.path}`,
+        previewUrl: githubRawFileUrl(context, file.path),
         relativePath: file.path.slice(`${MEDIA_ROOT}/`.length),
         size: file.size,
         modifiedAt: '',

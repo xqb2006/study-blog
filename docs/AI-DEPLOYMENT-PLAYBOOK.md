@@ -184,6 +184,10 @@ https://<pages-domain>/api/admin/callback
 GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET
 SESSION_SECRET
+GITHUB_REPOSITORY_OWNER
+GITHUB_REPOSITORY_NAME
+GITHUB_REPOSITORY_BRANCH
+GITHUB_ADMIN_USERNAME
 ```
 
 要求：
@@ -191,6 +195,8 @@ SESSION_SECRET
 - `GITHUB_CLIENT_ID` 可以是 Text。
 - `GITHUB_CLIENT_SECRET` 必须是 Secret。
 - `SESSION_SECRET` 必须是 Secret，建议至少 32 位随机字符串。
+- `GITHUB_REPOSITORY_OWNER`、`GITHUB_REPOSITORY_NAME`、`GITHUB_REPOSITORY_BRANCH` 用于指定 CMS 写入的仓库和分支。
+- `GITHUB_ADMIN_USERNAME` 用于限制可登录后台的 GitHub 用户名。
 - Secret 不能提交到 GitHub、README、前端代码或日志。
 - 修改变量后必须重新部署。
 
@@ -234,7 +240,7 @@ Cloudflare
 重点检查：
 
 - OAuth callback URL 是否完全一致。
-- 三个环境变量是否存在于 Production。
+- 七个环境变量是否存在于 Production，且仓库名、分支和管理员用户名拼写正确。
 - 修改环境变量后是否重新部署。
 - 是否访问了旧的 `/api/admin/callback?code=...&state=...` 地址。
 - GitHub 返回内容是 JSON 还是 URL encoded 表单。
@@ -264,8 +270,8 @@ OAuth callback URL
 - [ ] 构建命令和输出目录正确。
 - [ ] OAuth App 已创建。
 - [ ] callback URL 正确。
-- [ ] 三个环境变量已配置。
-- [ ] 管理员账号限制已修改。
+- [ ] 七个环境变量已配置。
+- [ ] 管理员账号、仓库所有者、仓库名称和分支变量已填写正确。
 - [ ] `/admin` 可以打开。
 - [ ] GitHub 登录可以回调成功。
 - [ ] 新建文章可以产生 GitHub 提交。

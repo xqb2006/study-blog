@@ -1,8 +1,7 @@
 import { errorMessage } from '../../../_lib/cms';
-import { json, putBase64File, requireSession } from '../../../_lib/github';
+import { githubRawFileUrl, json, putBase64File, requireSession } from '../../../_lib/github';
 
 const IMAGE_FILE = /\.(avif|gif|jpe?g|png|svg|webp)$/i;
-const RAW_BASE = 'https://raw.githubusercontent.com/xqb2006/study-blog/main/';
 
 function toBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -21,7 +20,7 @@ export const onRequestPost = async (context: any) => {
     const filename = file.name.replace(/[^a-zA-Z0-9._\-\u4e00-\u9fff]/g, '-');
     const path = `public/img${requestedDirectory ? `/${requestedDirectory}` : ''}/${filename}`;
     await putBase64File(context, path, toBase64(new Uint8Array(await file.arrayBuffer())), `cms: 上传图片 ${filename}`);
-    return json({ success: true, file: { name: filename, publicPath: path.replace(/^public/, ''), previewUrl: `${RAW_BASE}${path}`, relativePath: path.slice('public/img/'.length), size: file.size, modifiedAt: new Date().toISOString(), extension: filename.split('.').pop()?.toLowerCase() ?? '' } });
+    return json({ success: true, file: { name: filename, publicPath: path.replace(/^public/, ''), previewUrl: githubRawFileUrl(context, path), relativePath: path.slice('public/img/'.length), size: file.size, modifiedAt: new Date().toISOString(), extension: filename.split('.').pop()?.toLowerCase() ?? '' } });
   } catch (error) {
     if (error instanceof Response) return error;
     return json({ error: errorMessage(error) }, 500);

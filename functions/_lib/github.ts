@@ -1,9 +1,9 @@
 import { parse, stringify } from 'yaml';
 
-const OWNER = 'xqb2006';
-const REPO = 'study-blog';
-const BRANCH = 'main';
-const API = `https://api.github.com/repos/${OWNER}/${REPO}`;
+const DEFAULT_OWNER = 'xqb2006';
+const DEFAULT_REPOSITORY = 'study-blog';
+const DEFAULT_BRANCH = 'main';
+const DEFAULT_ADMIN = 'xqb2006';
 
 export type SessionUser = { login: string; avatar_url?: string; name?: string; access_token?: string };
 
@@ -11,6 +11,30 @@ export function env(context: any, key: string): string {
   const value = context.env?.[key];
   if (!value) throw new Error(`Missing environment variable: ${key}`);
   return value;
+}
+
+function optionalEnv(context: any, key: string, fallback: string): string {
+  const value = context.env?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+export function githubConfig(context: any) {
+  return {
+    owner: optionalEnv(context, 'GITHUB_REPOSITORY_OWNER', DEFAULT_OWNER),
+    repository: optionalEnv(context, 'GITHUB_REPOSITORY_NAME', DEFAULT_REPOSITORY),
+    branch: optionalEnv(context, 'GITHUB_REPOSITORY_BRANCH', DEFAULT_BRANCH),
+    admin: optionalEnv(context, 'GITHUB_ADMIN_USERNAME', DEFAULT_ADMIN),
+  };
+}
+
+export function githubRawFileUrl(context: any, filePath: string): string {
+  const { owner, repository, branch } = githubConfig(context);
+  const encodedPath = filePath
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+  return `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/${encodeURIComponent(branch)}/${encodedPath}`;
 }
 
 export function json(data: unknown, status = 200): Response {
@@ -70,7 +94,7 @@ export async function readSession(context: any, request: Request): Promise<Sessi
   if (signature !== expected) return null;
   try {
     const data = JSON.parse(decodeBase64(payload));
-    if (data.exp < Date.now() || data.user?.login !== OWNER) return null;
+    if (data.exp < Date.now() || data.user?.login !== githubConfig(context).admin) return null;
     return { ...data.user, access_token: data.token };
   } catch {
     return null;
@@ -97,7 +121,8 @@ function encodeBase64(value: string): string {
 
 async function githubFetch(context: any, path: string, init: RequestInit = {}): Promise<any> {
   const session = await readSession(context, context.request);
-  const response = await fetch(`${API}${path}`, {
+  const { owner, repository } = githubConfig(context);
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repository}${path}`, {
     ...init,
     headers: {
       accept: 'application/vnd.github+json',
@@ -112,7 +137,7 @@ async function githubFetch(context: any, path: string, init: RequestInit = {}): 
 }
 
 export async function getFile(context: any, filePath: string): Promise<{ content: string; sha: string }> {
-  const data = await githubFetch(context, `/contents/${filePath}?ref=${BRANCH}`);
+  const data = await githubFetch(context, `/contents/${filePath}?ref=${githubConfig(context).branch}`);
   return { content: decodeBase64(data.content), sha: data.sha };
 }
 
@@ -121,7 +146,7 @@ export async function listPostFiles(context: any): Promise<any[]> {
 }
 
 export async function listRepositoryFiles(context: any, directory: string, matcher?: RegExp): Promise<{ path: string; size: number; sha: string }[]> {
-  const data = await githubFetch(context, `/git/trees/${BRANCH}?recursive=1`);
+  const data = await githubFetch(context, `/git/trees/${githubConfig(context).branch}?recursive=1`);
   const prefix = directory.replace(/^\/+|\/+$/g, '') + '/';
   return (data.tree as { path: string; type: string; size?: number; sha: string }[])
     .filter((file) => file.type === 'blob' && file.path.startsWith(prefix) && (!matcher || matcher.test(file.path)))
@@ -142,7 +167,7 @@ export async function putFile(context: any, filePath: string, content: string, m
   return githubFetch(context, `/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ message, content: encodeBase64(content), branch: BRANCH, ...(sha ? { sha } : {}) }),
+    body: JSON.stringify({ message, content: encodeBase64(content), branch: githubConfig(context).branch, ...(sha ? { sha } : {}) }),
   });
 }
 
@@ -150,7 +175,7 @@ export async function putBase64File(context: any, filePath: string, base64Conten
   return githubFetch(context, `/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ message, content: base64Content, branch: BRANCH, ...(sha ? { sha } : {}) }),
+    body: JSON.stringify({ message, content: base64Content, branch: githubConfig(context).branch, ...(sha ? { sha } : {}) }),
   });
 }
 
@@ -161,7 +186,8 @@ export async function putFiles(
 ): Promise<void> {
   if (!files.length) return;
 
-  const ref = await githubFetch(context, `/git/ref/heads/${BRANCH}`);
+  const branch = githubConfig(context).branch;
+  const ref = await githubFetch(context, `/git/ref/heads/${branch}`);
   const parentSha = ref.object.sha as string;
   const parentCommit = await githubFetch(context, `/git/commits/${parentSha}`);
   const tree = await Promise.all(
@@ -184,7 +210,7 @@ export async function putFiles(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ message, tree: nextTree.sha, parents: [parentSha] }),
   });
-  await githubFetch(context, `/git/refs/heads/${BRANCH}`, {
+  await githubFetch(context, `/git/refs/heads/${branch}`, {
     method: 'PATCH',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ sha: commit.sha, force: false }),
@@ -195,6 +221,6 @@ export async function deleteFile(context: any, filePath: string, sha: string, me
   return githubFetch(context, `/contents/${filePath}`, {
     method: 'DELETE',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ message, sha, branch: BRANCH }),
+    body: JSON.stringify({ message, sha, branch: githubConfig(context).branch }),
   });
 }

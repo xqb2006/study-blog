@@ -1,4 +1,4 @@
-import { clearCookieHeader, cookieHeader, createSession, env, getCookie, redirect } from '../../_lib/github';
+import { clearCookieHeader, cookieHeader, createSession, env, getCookie, githubConfig, redirect } from '../../_lib/github';
 
 export const onRequestGet = async (context: any) => {
   const url = new URL(context.request.url);
@@ -60,7 +60,7 @@ export const onRequestGet = async (context: any) => {
     console.error('[admin] GitHub user request failed:', userResponse.status, message, userResponse.headers.get('x-github-request-id'));
     return new Response(`GitHub 用户信息读取失败（HTTP ${userResponse.status}：${message}），请稍后重试。`, { status: 502 });
   }
-  if (user.login !== 'xqb2006') return new Response('此账号没有博客管理权限。', { status: 403 });
+  if (user.login !== githubConfig(context).admin) return new Response('此账号没有博客管理权限。', { status: 403 });
 
   const response = redirect(new URL('/admin/', context.request.url).toString());
   response.headers.append('set-cookie', cookieHeader('admin_session', await createSession(context, user, tokenData.access_token), 7 * 24 * 60 * 60));

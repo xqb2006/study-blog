@@ -6,6 +6,12 @@
 
 一个萌系 / 二次元 / 粉蓝配色的博客主题，适合 ACG、前端、手账向个人站，性能优异。
 
+## 原项目与许可证
+
+- 原主题作者与上游仓库：[cosZone / astro-koharu](https://github.com/cosZone/astro-koharu)。
+- 本仓库是在原项目基础上整理的部署版本：保留原主题风格与功能，并加入 GitHub + Cloudflare Pages 的零服务器部署和网页后台写作方案。
+- 本项目继续遵循仓库内的 [AGPL-3.0](./LICENSE) 许可证；二次发布或继续修改时，请保留原作者署名、上游链接和许可证。
+
 > 命名灵感来源于 “小春日和”（こはるびより）指的是晚秋到初冬这段时期，持续的一段似春天般温暖的晴天。也就是中文中的"小阳春"。
 
 博客整体设计灵感来自 Hexo 的 [Shoka](https://shoka.lostyu.me/computer-science/note/theme-shoka-doc/) 主题，用更现代的技术栈打造属于你的个人博客。
@@ -40,15 +46,11 @@
 
 ### Cloudflare Pages 免费部署
 
-1. Fork 本仓库到你的 GitHub 账号。
-2. 在 Cloudflare Pages 中连接该仓库。
-3. 构建命令填写 `npm run build`。
-4. 输出目录填写 `dist`。
-5. 部署完成后，将 `config/site.yaml` 中的 `site.url` 改成你的 `pages.dev` 地址。
+不需要购买服务器、数据库或域名。请按面向新手的完整教程操作：
 
-网页写作可以使用根目录的 `.pages.yml` 配置 Git 型 CMS；CMS 不可用时，直接编辑 `src/content/blog/` 里的 Markdown 文件即可。
+**[从零部署免费的个人博客（GitHub + Cloudflare Pages + 网页后台）](./docs/ZERO-BASIC-BLOG-DEPLOYMENT.md)**
 
-详细的 GitHub 网页写作流程请参阅 [docs/GITHUB-WEB-EDITING.md](./docs/GITHUB-WEB-EDITING.md)。
+教程包含 Fork、Cloudflare Pages 部署、站点资料设置、GitHub OAuth 网页后台、日常发文、图片上传和故障排查。网页后台暂时不可用时，也可以直接在 GitHub 网页中编辑 Markdown；操作见 [GitHub 网页写作指南](./docs/GITHUB-WEB-EDITING.md)。
 
 ### Docker 部署
 
