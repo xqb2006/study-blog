@@ -1,8 +1,9 @@
-import { deleteFile, getFile, listRepositoryFiles, makeMarkdown, parseMarkdown, putFile, requireSession } from './github';
+import { deleteFile, getFile, listRepositoryFiles, makeMarkdown, parseMarkdown, putFile, putFiles, requireSession } from './github';
 import { parse, stringify } from 'yaml';
 
 const CONTENT_DIR = 'src/content/blog';
 const CONFIG_PATH = 'config/site.yaml';
+const RUNTIME_SETTINGS_PATH = 'public/runtime/site-settings.json';
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '请求失败，请稍后重试。';
@@ -77,11 +78,52 @@ export async function getSettings(context: any) {
 }
 
 export async function saveSettings(context: any, patch: unknown) {
-  const { file, settings } = await getSettings(context);
+  const { settings } = await getSettings(context);
   if (!patch || typeof patch !== 'object') throw new Error('设置内容格式无效。');
-  const merged = { ...settings, ...(patch as Record<string, unknown>) };
-  await putFile(context, CONFIG_PATH, stringify(merged), 'cms: 更新站点设置', file.sha);
+  const merged = mergeSettings(settings, patch as Record<string, unknown>);
+  const updatedAt = new Date().toISOString();
+  const runtimeSettings = buildRuntimeSettings(merged, updatedAt);
+  await putFiles(
+    context,
+    [
+      { path: CONFIG_PATH, content: stringify(merged) },
+      { path: RUNTIME_SETTINGS_PATH, content: `${JSON.stringify(runtimeSettings, null, 2)}\n` },
+    ],
+    'cms: 更新站点设置',
+  );
+  return { settings: merged, runtimeSync: { success: true, path: '/runtime/site-settings.json', updatedAt, message: '首页资料已同步，Cloudflare 正在更新静态页面。' } };
+}
+
+function mergeSettings(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    const existing = merged[key];
+    merged[key] = isPlainObject(existing) && isPlainObject(value) ? mergeSettings(existing, value) : value;
+  }
   return merged;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function buildRuntimeSettings(config: Record<string, unknown>, updatedAt: string) {
+  const site = isPlainObject(config.site) ? config.site : {};
+  const social = isPlainObject(config.social) ? config.social : {};
+  return {
+    updatedAt,
+    site: {
+      title: typeof site.title === 'string' ? site.title : undefined,
+      alternate: typeof site.alternate === 'string' ? site.alternate : undefined,
+      subtitle: typeof site.subtitle === 'string' ? site.subtitle : undefined,
+      name: typeof site.name === 'string' ? site.name : undefined,
+      description: typeof site.description === 'string' ? site.description : undefined,
+      avatar: typeof site.avatar === 'string' ? site.avatar : undefined,
+      author: typeof site.author === 'string' ? site.author : undefined,
+      url: typeof site.url === 'string' ? site.url : undefined,
+    },
+    social,
+  };
 }
 
 export async function removePost(context: any, postId: unknown) {

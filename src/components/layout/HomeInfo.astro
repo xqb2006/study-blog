@@ -197,7 +197,7 @@ const strippedPath = stripLocaleFromPath(Astro.url.pathname);
   }
 
   function loadRuntimeSiteSettings(): Promise<RuntimeSiteSettings | null> {
-    window.__runtimeSiteSettingsPromise ??= fetch('/runtime/site-settings.json', { cache: 'force-cache' })
+    window.__runtimeSiteSettingsPromise ??= fetch(`/runtime/site-settings.json?ts=${Date.now()}`, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .catch(() => null);
     return window.__runtimeSiteSettingsPromise;
@@ -229,12 +229,12 @@ const strippedPath = stripLocaleFromPath(Astro.url.pathname);
       const settings = await loadRuntimeSiteSettings();
       if (!settings) return;
       const avatar = settings.site?.avatar;
-      const displayName = isRuntimeText(settings.site?.name)
-        ? settings.site.name
-        : isRuntimeText(settings.site?.title)
-          ? settings.site.title
-          : isRuntimeText(settings.site?.author)
-            ? settings.site.author
+      const displayName = isRuntimeText(settings.site?.author)
+        ? settings.site.author
+        : isRuntimeText(settings.site?.name)
+          ? settings.site.name
+          : isRuntimeText(settings.site?.title)
+            ? settings.site.title
             : undefined;
       const description = isRuntimeText(settings.site?.description) ? settings.site.description : undefined;
 

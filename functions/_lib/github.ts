@@ -154,6 +154,43 @@ export async function putBase64File(context: any, filePath: string, base64Conten
   });
 }
 
+export async function putFiles(
+  context: any,
+  files: { path: string; content: string }[],
+  message: string,
+): Promise<void> {
+  if (!files.length) return;
+
+  const ref = await githubFetch(context, `/git/ref/heads/${BRANCH}`);
+  const parentSha = ref.object.sha as string;
+  const parentCommit = await githubFetch(context, `/git/commits/${parentSha}`);
+  const tree = await Promise.all(
+    files.map(async (file) => {
+      const blob = await githubFetch(context, '/git/blobs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ content: encodeBase64(file.content), encoding: 'base64' }),
+      });
+      return { path: file.path, mode: '100644', type: 'blob', sha: blob.sha };
+    }),
+  );
+  const nextTree = await githubFetch(context, '/git/trees', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree }),
+  });
+  const commit = await githubFetch(context, '/git/commits', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ message, tree: nextTree.sha, parents: [parentSha] }),
+  });
+  await githubFetch(context, `/git/refs/heads/${BRANCH}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sha: commit.sha, force: false }),
+  });
+}
+
 export async function deleteFile(context: any, filePath: string, sha: string, message: string) {
   return githubFetch(context, `/contents/${filePath}`, {
     method: 'DELETE',
