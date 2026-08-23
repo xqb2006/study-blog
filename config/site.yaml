@@ -27,7 +27,6 @@ i18n:
     - code: ja
       label: 日本語
 categoryMap:
-  工具: tools
   网站推荐: websites
   周刊: weekly
   学习心得: Learning-insights
