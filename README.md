@@ -49,7 +49,7 @@
 
 不需要购买服务器、数据库或域名。请按面向新手的完整教程操作：
 
-**[从零部署免费的个人博客（GitHub + Cloudflare Pages + 网页后台）](./docs/ZERO-BASIC-BLOG-DEPLOYMENT.md)**
+**[从零部署个人博客：GitHub + Cloudflare Pages + 网页后台](./docs/完整部署教程.md)**
 
 教程包含 Fork、Cloudflare Pages 部署、站点资料设置、GitHub OAuth 网页后台、日常发文、图片上传和故障排查。网页后台暂时不可用时，也可以直接在 GitHub 网页中编辑 Markdown；操作见 [GitHub 网页写作指南](./docs/GITHUB-WEB-EDITING.md)。
 
