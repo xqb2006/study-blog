@@ -9,7 +9,8 @@
 ## 原项目与许可证
 
 - 原主题作者与上游仓库：[cosZone / astro-koharu](https://github.com/cosZone/astro-koharu)。
-- 本仓库是在原项目基础上整理的部署版本：保留原主题风格与功能，并加入 GitHub + Cloudflare Pages 的零服务器部署和网页后台写作方案。
+- 在线 CMS 的早期定制参考：[ldt471146 / astro-koharu](https://github.com/ldt471146/astro-koharu)；该项目基于上游 v4.1.0 对 CMS 和部署流程进行了扩展。
+- 本仓库在上述基础上继续整理：保留原主题风格与功能，并针对 GitHub 内容存储、Cloudflare Pages 自动部署和网页后台写作进行了适配与重构。
 - 本项目继续遵循仓库内的 [AGPL-3.0](./LICENSE) 许可证；二次发布或继续修改时，请保留原作者署名、上游链接和许可证。
 
 > 命名灵感来源于 “小春日和”（こはるびより）指的是晚秋到初冬这段时期，持续的一段似春天般温暖的晴天。也就是中文中的"小阳春"。
