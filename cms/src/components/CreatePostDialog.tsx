@@ -162,7 +162,7 @@ export function CreatePostDialog({ open, onOpenChange, existingCategories, onSuc
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>新建文章</DialogTitle>
-          <DialogDescription>填写标题、分类和标签，创建后会直接进入编辑器。</DialogDescription>
+          <DialogDescription>填写标题、分类路径和标签，创建后会直接进入编辑器。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -187,7 +187,8 @@ export function CreatePostDialog({ open, onOpenChange, existingCategories, onSuc
 
           {/* Categories */}
           <div className="space-y-2">
-            <span className="font-medium text-sm">分类</span>
+            <span className="font-medium text-sm">分类路径</span>
+            <p className="text-muted-foreground text-xs">按顺序选择层级，例如“笔记 → 前端”；一篇文章只有一条分类路径。</p>
 
             {/* Selected categories display */}
             {selectedCategories.length > 0 && (

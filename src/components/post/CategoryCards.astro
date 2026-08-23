@@ -96,7 +96,7 @@ const categoryPosts: CategoryWithPosts[] = await Promise.all(
               {categoryInfo?.children?.length
                 ? categoryInfo.children.map((child) => (
                     <a
-                      href={`${categoryLink}/${categoryMap[child?.name]}`}
+                      href={`${categoryLink}/${categoryMap[child?.name] ?? encodeURIComponent(child?.name ?? '')}`}
                       class="text-primary hover:text-blue truncate text-left transition-colors duration-300"
                     >
                       {translateCategoryName(child.name, locale)}

@@ -71,23 +71,23 @@ export function normalizePostFrontmatter(value: unknown): Record<string, unknown
   return frontmatter;
 }
 
-function normalizeCategories(value: unknown): string[] | string[][] | undefined {
+function normalizeCategories(value: unknown): string[][] | undefined {
   if (typeof value === 'string') {
     const category = value.trim();
-    return category ? [category] : undefined;
+    return category ? [[category]] : undefined;
   }
   if (!Array.isArray(value)) return undefined;
 
   if (value.every((item) => typeof item === 'string')) {
-    const categories = normalizeStringList(value);
-    return categories.length ? categories : undefined;
+    const categoryPath = normalizeStringList(value);
+    return categoryPath.length ? [categoryPath] : undefined;
   }
 
   const categoryPaths = value
     .filter(Array.isArray)
     .map((path) => normalizeStringList(path))
     .filter((path) => path.length > 0);
-  return categoryPaths.length ? categoryPaths : undefined;
+  return categoryPaths.length ? [categoryPaths[0]] : undefined;
 }
 
 export function normalizeCategoryMappings(value: unknown): Record<string, string> {
@@ -101,6 +101,20 @@ export function normalizeCategoryMappings(value: unknown): Record<string, string
     mappings[normalizedName] = normalizedSlug;
   }
   return mappings;
+}
+
+function fallbackCategorySlug(name: string, existingSlugs: Set<string>): string {
+  let hash = 0;
+  for (const character of name) hash = (hash * 31 + character.codePointAt(0)!) >>> 0;
+
+  const base = `category-${hash.toString(36)}`;
+  let slug = base;
+  let index = 2;
+  while (existingSlugs.has(slug)) {
+    slug = `${base}-${index}`;
+    index += 1;
+  }
+  return slug;
 }
 
 export function postIdFromPath(path: string): string {
@@ -151,17 +165,33 @@ async function savePost(
   sha: string | undefined,
   categoryMappings: unknown,
 ) {
-  const mappings = normalizeCategoryMappings(categoryMappings);
   const postFile = { path: toPostPath(postId), content: makeMarkdown(frontmatter, content) };
-
-  if (!Object.keys(mappings).length) {
+  const requestedMappings = normalizeCategoryMappings(categoryMappings);
+  const categoryNames = normalizeStringList(frontmatter.categories);
+  if (!categoryNames.length && !Object.keys(requestedMappings).length) {
     await putFile(context, postFile.path, postFile.content, message, sha);
     return;
   }
 
   const { settings } = await getSettings(context);
   const categoryMap = isPlainObject(settings.categoryMap) ? settings.categoryMap : {};
-  const nextSettings = { ...settings, categoryMap: { ...categoryMap, ...mappings } };
+  const existingSlugs = new Set(Object.values(categoryMap).filter((slug): slug is string => typeof slug === 'string'));
+  const newMappings: Record<string, string> = {};
+
+  for (const name of categoryNames) {
+    if (typeof categoryMap[name] === 'string') continue;
+    const requestedSlug = requestedMappings[name];
+    const slug = requestedSlug && !existingSlugs.has(requestedSlug) ? requestedSlug : fallbackCategorySlug(name, existingSlugs);
+    newMappings[name] = slug;
+    existingSlugs.add(slug);
+  }
+
+  if (!Object.keys(newMappings).length) {
+    await putFile(context, postFile.path, postFile.content, message, sha);
+    return;
+  }
+
+  const nextSettings = { ...settings, categoryMap: { ...categoryMap, ...newMappings } };
   await putFiles(context, [postFile, { path: CONFIG_PATH, content: stringify(nextSettings) }], message);
 }
 
