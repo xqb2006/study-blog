@@ -198,6 +198,13 @@ export interface DeleteCategoryResponse {
   buildSync?: BuildSyncSummary;
 }
 
+export interface DeleteCategoryMappingResponse {
+  success: boolean;
+  categoryName: string;
+  removed: boolean;
+  buildSync?: BuildSyncSummary;
+}
+
 /**
  * Site settings exposed to the CMS dashboard.
  */

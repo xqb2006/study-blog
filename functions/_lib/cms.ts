@@ -189,15 +189,18 @@ async function savePost(
 
   const { settings } = await getSettings(context);
   const categoryMap = isPlainObject(settings.categoryMap) ? settings.categoryMap : {};
+  const disabledCategoryMappings = new Set(normalizeStringList(settings.disabledCategoryMappings));
   const existingSlugs = new Set(Object.values(categoryMap).filter((slug): slug is string => typeof slug === 'string'));
   const newMappings: Record<string, string> = {};
 
   for (const name of categoryNames) {
     if (typeof categoryMap[name] === 'string') continue;
     const requestedSlug = requestedMappings[name];
+    if (!requestedSlug && disabledCategoryMappings.has(name)) continue;
     const slug = requestedSlug && !existingSlugs.has(requestedSlug) ? requestedSlug : fallbackCategorySlug(name, existingSlugs);
     newMappings[name] = slug;
     existingSlugs.add(slug);
+    disabledCategoryMappings.delete(name);
   }
 
   if (!Object.keys(newMappings).length) {
@@ -205,7 +208,11 @@ async function savePost(
     return;
   }
 
-  const nextSettings = { ...settings, categoryMap: { ...categoryMap, ...newMappings } };
+  const nextSettings = {
+    ...settings,
+    categoryMap: { ...categoryMap, ...newMappings },
+    disabledCategoryMappings: [...disabledCategoryMappings],
+  };
   await putFiles(context, [postFile, { path: CONFIG_PATH, content: stringify(nextSettings) }], message);
 }
 
@@ -303,6 +310,7 @@ export async function deleteCategory(context: any, categoryName: unknown) {
   const nextSettings = {
     ...settings,
     categoryMap,
+    disabledCategoryMappings: normalizeStringList(settings.disabledCategoryMappings).filter((item) => item !== name),
     featuredCategories: nextFeaturedCategories,
     featuredSeries: nextFeaturedSeries,
   };
@@ -316,6 +324,29 @@ export async function deleteCategory(context: any, categoryName: unknown) {
     removedFeaturedCategories: featuredCategories.length - nextFeaturedCategories.length,
     removedFeaturedSeries: featuredSeries.length - nextFeaturedSeries.length,
   };
+}
+
+export async function deleteCategoryMapping(context: any, categoryName: unknown) {
+  await requireSession(context);
+  const name = typeof categoryName === 'string' ? categoryName.trim() : '';
+  if (!name) throw new Error('分类名称无效。');
+
+  const { file, settings } = await getSettings(context);
+  const categoryMap = isPlainObject(settings.categoryMap) ? { ...settings.categoryMap } : {};
+  const removed = Object.prototype.hasOwnProperty.call(categoryMap, name);
+  delete categoryMap[name];
+  const disabledCategoryMappings = new Set(normalizeStringList(settings.disabledCategoryMappings));
+  disabledCategoryMappings.add(name);
+
+  await putFile(
+    context,
+    CONFIG_PATH,
+    stringify({ ...settings, categoryMap, disabledCategoryMappings: [...disabledCategoryMappings] }),
+    `cms: 删除分类 URL 映射 ${name}`,
+    file.sha,
+  );
+
+  return { categoryName: name, removed };
 }
 
 function mergeSettings(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {

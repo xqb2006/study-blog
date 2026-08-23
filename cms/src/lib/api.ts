@@ -10,6 +10,7 @@ import type {
   CreatePostParams,
   CreatePostResponse,
   DeleteCategoryResponse,
+  DeleteCategoryMappingResponse,
   DeleteMediaResponse,
   DeletePostResponse,
   ImportMarkdownParams,
@@ -277,6 +278,22 @@ export async function deleteCategory(categoryName: string): Promise<DeleteCatego
 
   if (!response.ok) {
     throw await readJsonError(response, `Failed to delete category: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteCategoryMapping(categoryName: string): Promise<DeleteCategoryMappingResponse> {
+  const response = await fetch('/api/cms/categories/mapping/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ categoryName }),
+  });
+
+  if (!response.ok) {
+    throw await readJsonError(response, `Failed to delete category mapping: ${response.status}`);
   }
 
   return response.json();

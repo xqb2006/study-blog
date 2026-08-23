@@ -2,7 +2,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { deleteCategory, getSiteSettings, saveSiteSettings } from '@/lib/api';
+import { deleteCategory, deleteCategoryMapping, getSiteSettings, saveSiteSettings } from '@/lib/api';
 import type { FeaturedCategoryItem, FeaturedSeriesItem, SiteSettings } from '@/types';
 import { Field, inputClassName, Panel, textareaClassName } from './dashboard/Panel';
 import { MediaPathField } from './MediaPathField';
@@ -82,6 +82,8 @@ export function TaxonomyPanel() {
   const [isDirty, setIsDirty] = useState(false);
   const [categoryPendingDeletion, setCategoryPendingDeletion] = useState<CategoryMapRow | null>(null);
   const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+  const [mappingPendingDeletion, setMappingPendingDeletion] = useState<CategoryMapRow | null>(null);
+  const [isDeletingMapping, setIsDeletingMapping] = useState(false);
   const [isReloadConfirmOpen, setIsReloadConfirmOpen] = useState(false);
 
   const markDirty = () => {
@@ -227,6 +229,21 @@ export function TaxonomyPanel() {
     }
   };
 
+  const handleDeleteCategoryMapping = async () => {
+    if (!mappingPendingDeletion) return;
+    setIsDeletingMapping(true);
+    try {
+      const result = await deleteCategoryMapping(mappingPendingDeletion.name);
+      setMappingPendingDeletion(null);
+      await loadSettings();
+      toast.success(result.removed ? `已删除“${result.categoryName}”的 URL 映射；文章分类保留不变。` : '该 URL 映射已不存在。');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除分类 URL 映射失败');
+    } finally {
+      setIsDeletingMapping(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -319,20 +336,36 @@ export function TaxonomyPanel() {
                 placeholder="URL slug，如 note"
                 className={inputClassName}
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (isDirty) {
-                    toast.info('请先保存当前配置，或重新读取后再彻底删除分类。');
-                    return;
-                  }
-                  setCategoryPendingDeletion(row);
-                }}
-                title="彻底删除分类及其文章引用"
-              >
-                <AppIcon name="ri:delete-bin-line" className="size-4" />
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (isDirty) {
+                      toast.info('请先保存当前配置，或重新读取后再删除 URL 映射。');
+                      return;
+                    }
+                    setMappingPendingDeletion(row);
+                  }}
+                  title="仅删除 URL 映射，保留文章分类"
+                >
+                  <AppIcon name="ri:link-unlink-m" className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (isDirty) {
+                      toast.info('请先保存当前配置，或重新读取后再彻底删除分类。');
+                      return;
+                    }
+                    setCategoryPendingDeletion(row);
+                  }}
+                  title="彻底删除分类及其文章引用"
+                >
+                  <AppIcon name="ri:delete-bin-line" className="size-4" />
+                </Button>
+              </div>
             </div>
           ))}
           {categoryRows.length === 0 && <p className="text-muted-foreground text-sm">暂无分类映射。</p>}
@@ -533,6 +566,18 @@ export function TaxonomyPanel() {
           请确认：这不是只删除网址映射，而是删除分类在文章和站点配置中的全部引用。
         </div>
       </ConfirmActionDialog>
+      <ConfirmActionDialog
+        open={Boolean(mappingPendingDeletion)}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingMapping) setMappingPendingDeletion(null);
+        }}
+        title={`删除“${mappingPendingDeletion?.name || ''}”的 URL 映射？`}
+        description="文章分类、首页卡片和精选系列都会保留。分类页面将改用分类名称作为网址片段；以后保存文章时也不会自动重新创建此映射。"
+        confirmLabel="删除 URL 映射"
+        pending={isDeletingMapping}
+        destructive
+        onConfirm={() => void handleDeleteCategoryMapping()}
+      />
       <ConfirmActionDialog
         open={isReloadConfirmOpen}
         onOpenChange={setIsReloadConfirmOpen}
