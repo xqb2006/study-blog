@@ -27,7 +27,6 @@ i18n:
     - code: ja
       label: 日本語
 categoryMap:
-  周刊: weekly
   学习心得: Learning-insights
   数学: Mathematics
   数据结构: DS
