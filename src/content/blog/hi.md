@@ -1,11 +1,19 @@
 ---
 title: hi
+draft: true
+sticky: false
+tocNumbering: true
+excludeFromSummary: false
+math: false
+quiz: false
 date: 2026-08-23 10:51:30
 categories:
-  - 随笔
-tags: []
-draft: true
+  - - 随笔
+description: 摘要111111111111111111111111111111111111111111
 cover: /img/cover/10.webp
+updated: 2026-08-23 10:53:18
 ---
 
+你好，这个用于测试
 
+1111111fswefgrwghwaikfghwuifgwaiughhusehcvaujfdgcbquudgr2u2q8`EJIWQFGWUQ2FGUW2QFTRG2UWFRGUWFWUTRWUQYWUHGRFWUQHRGFUFUFGHWURGFT7WEGFWWURTG7UFURUWFUWRU2GFHUWFG2UT3TRFHU2IRFUWR2RATGAEWFGAWJHFGHAFGHAGFAGFAGAHJEFGAUFGAUGHAUHGAIGFAGAGFAJFGUGYUGFUYGFYAWGYWEGFYAFGWUAYFGYUAWFGYWGFYAWGFYWGFGYWFGYWF
