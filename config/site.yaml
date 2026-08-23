@@ -32,6 +32,12 @@ categoryMap:
   工具: tools
   网站推荐: websites
   周刊: weekly
+  学习心得: Learning-insights
+  数学: Mathematics
+  数据结构: DS
+  操作系统: OS
+  计算机网络: CN
+  计算机组成原理: CO
 featuredCategories:
   - link: life
     label: 随笔
