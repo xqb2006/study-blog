@@ -16,6 +16,7 @@ site:
     - Astro
     - 技术
     - 网站推荐
+    - 考研
 i18n:
   defaultLocale: zh
   locales:
