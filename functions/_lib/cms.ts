@@ -1,5 +1,14 @@
-import { deleteFile, getFile, listRepositoryFiles, makeMarkdown, parseMarkdown, putFile, putFiles, requireSession } from './github';
 import { parse, stringify } from 'yaml';
+import {
+  deleteFile,
+  getFile,
+  listRepositoryFiles,
+  makeMarkdown,
+  parseMarkdown,
+  putFile,
+  putFiles,
+  requireSession,
+} from './github';
 
 const CONTENT_DIR = 'src/content/blog';
 const CONFIG_PATH = 'config/site.yaml';
@@ -21,8 +30,77 @@ export function toPostPath(postId: string): string {
 }
 
 export function normalizeStringList(value: unknown): string[] {
-  if (Array.isArray(value)) return value.flat(Infinity).filter((item): item is string => typeof item === 'string');
-  return typeof value === 'string' ? [value] : [];
+  const values = Array.isArray(value) ? value.flat(Infinity) : [value];
+  return [
+    ...new Set(
+      values
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export function normalizePostFrontmatter(value: unknown): Record<string, unknown> {
+  if (!isPlainObject(value)) throw new Error('文章属性格式无效。');
+
+  const title = typeof value.title === 'string' ? value.title.trim() : '';
+  if (!title) throw new Error('请输入文章标题。');
+
+  const frontmatter: Record<string, unknown> = { ...value, title };
+  const categories = normalizeCategories(value.categories);
+  const tags = normalizeStringList(value.tags);
+
+  if (categories) frontmatter.categories = categories;
+  else delete frontmatter.categories;
+  if (tags.length) frontmatter.tags = tags;
+  else delete frontmatter.tags;
+
+  for (const field of ['description', 'cover', 'link', 'subtitle'] as const) {
+    if (typeof frontmatter[field] === 'string') {
+      const normalized = frontmatter[field].trim();
+      if (normalized) frontmatter[field] = normalized;
+      else delete frontmatter[field];
+    }
+  }
+
+  for (const field of ['draft', 'sticky', 'tocNumbering', 'excludeFromSummary', 'math', 'quiz'] as const) {
+    if (frontmatter[field] !== undefined && typeof frontmatter[field] !== 'boolean') delete frontmatter[field];
+  }
+
+  return frontmatter;
+}
+
+function normalizeCategories(value: unknown): string[] | string[][] | undefined {
+  if (typeof value === 'string') {
+    const category = value.trim();
+    return category ? [category] : undefined;
+  }
+  if (!Array.isArray(value)) return undefined;
+
+  if (value.every((item) => typeof item === 'string')) {
+    const categories = normalizeStringList(value);
+    return categories.length ? categories : undefined;
+  }
+
+  const categoryPaths = value
+    .filter(Array.isArray)
+    .map((path) => normalizeStringList(path))
+    .filter((path) => path.length > 0);
+  return categoryPaths.length ? categoryPaths : undefined;
+}
+
+export function normalizeCategoryMappings(value: unknown): Record<string, string> {
+  if (!isPlainObject(value)) return {};
+
+  const mappings: Record<string, string> = {};
+  for (const [name, slug] of Object.entries(value)) {
+    const normalizedName = name.trim();
+    const normalizedSlug = typeof slug === 'string' ? slug.trim() : '';
+    if (!normalizedName || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) continue;
+    mappings[normalizedName] = normalizedSlug;
+  }
+  return mappings;
 }
 
 export function postIdFromPath(path: string): string {
@@ -64,10 +142,55 @@ export async function listPosts(context: any) {
   return posts;
 }
 
-export async function updatePost(context: any, postId: unknown, frontmatter: unknown, content: unknown, message: string) {
+async function savePost(
+  context: any,
+  postId: string,
+  frontmatter: Record<string, unknown>,
+  content: string,
+  message: string,
+  sha: string | undefined,
+  categoryMappings: unknown,
+) {
+  const mappings = normalizeCategoryMappings(categoryMappings);
+  const postFile = { path: toPostPath(postId), content: makeMarkdown(frontmatter, content) };
+
+  if (!Object.keys(mappings).length) {
+    await putFile(context, postFile.path, postFile.content, message, sha);
+    return;
+  }
+
+  const { settings } = await getSettings(context);
+  const categoryMap = isPlainObject(settings.categoryMap) ? settings.categoryMap : {};
+  const nextSettings = { ...settings, categoryMap: { ...categoryMap, ...mappings } };
+  await putFiles(context, [postFile, { path: CONFIG_PATH, content: stringify(nextSettings) }], message);
+}
+
+export async function createPost(
+  context: any,
+  postId: unknown,
+  frontmatter: unknown,
+  content: unknown,
+  message: string,
+  categoryMappings?: unknown,
+) {
+  await requireSession(context);
+  const id = ensurePostId(postId);
+  if (typeof content !== 'string') throw new Error('文章正文格式无效。');
+  await savePost(context, id, normalizePostFrontmatter(frontmatter), content, message, undefined, categoryMappings);
+  return id;
+}
+
+export async function updatePost(
+  context: any,
+  postId: unknown,
+  frontmatter: unknown,
+  content: unknown,
+  message: string,
+  categoryMappings?: unknown,
+) {
   const post = await getPost(context, postId);
-  if (!frontmatter || typeof frontmatter !== 'object' || typeof content !== 'string') throw new Error('文章内容格式无效。');
-  await putFile(context, toPostPath(post.id), makeMarkdown(frontmatter as Record<string, unknown>, content), message, post.file.sha);
+  if (typeof content !== 'string') throw new Error('文章正文格式无效。');
+  await savePost(context, post.id, normalizePostFrontmatter(frontmatter), content, message, post.file.sha, categoryMappings);
   return post.id;
 }
 
@@ -91,7 +214,15 @@ export async function saveSettings(context: any, patch: unknown) {
     ],
     'cms: 更新站点设置',
   );
-  return { settings: merged, runtimeSync: { success: true, path: '/runtime/site-settings.json', updatedAt, message: '首页资料已同步，Cloudflare 正在更新静态页面。' } };
+  return {
+    settings: merged,
+    runtimeSync: {
+      success: true,
+      path: '/runtime/site-settings.json',
+      updatedAt,
+      message: '首页资料已同步，Cloudflare 正在更新静态页面。',
+    },
+  };
 }
 
 function mergeSettings(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {

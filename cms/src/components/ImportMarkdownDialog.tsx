@@ -4,10 +4,10 @@
  * Imports a Markdown file or a public Markdown URL into the blog content tree.
  */
 
-import { AppIcon } from '@/components/ui/app-icon';
 import type { FormEvent } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { importMarkdown } from '@/lib/api';
@@ -30,7 +30,7 @@ export function ImportMarkdownDialog({ open, onOpenChange, existingCategories, o
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('笔记');
   const [tags, setTags] = useState('');
-  const [draft, setDraft] = useState(true);
+  const [draft, setDraft] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categoryOptions = useMemo(() => {
@@ -45,7 +45,7 @@ export function ImportMarkdownDialog({ open, onOpenChange, existingCategories, o
     setTitle('');
     setCategory('笔记');
     setTags('');
-    setDraft(true);
+    setDraft(false);
   }, []);
 
   const handleClose = useCallback(
@@ -177,7 +177,12 @@ export function ImportMarkdownDialog({ open, onOpenChange, existingCategories, o
           </label>
 
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={draft} onChange={(event) => setDraft(event.target.checked)} className="size-4 rounded border-input" />
+            <input
+              type="checkbox"
+              checked={draft}
+              onChange={(event) => setDraft(event.target.checked)}
+              className="size-4 rounded border-input"
+            />
             <span className="text-sm">保存为草稿</span>
           </label>
 

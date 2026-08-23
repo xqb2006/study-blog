@@ -5,13 +5,14 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AppIcon } from '@/components/ui/app-icon';
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { type CustomCategory, useCustomCategories } from '@/hooks/useCustomCategories';
+import { createPost } from '@/lib/api';
 import { type CreatePostFormData, createPostSchema } from '@/lib/schemas';
 import { cn } from '@/lib/utils';
 import type { BuildSyncSummary } from '@/types';
@@ -91,7 +92,7 @@ export function CreatePostDialog({ open, onOpenChange, existingCategories, onSuc
       title: '',
       categories: [],
       tags: '',
-      draft: true,
+      draft: false,
     },
   });
 
@@ -139,24 +140,13 @@ export function CreatePostDialog({ open, onOpenChange, existingCategories, onSuc
       // Get custom category mappings
       const categoryMappings = getCategoryMappings();
 
-      const response = await fetch('/api/cms/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title,
-          categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-          tags,
-          draft: data.draft,
-          categoryMappings: Object.keys(categoryMappings).length > 0 ? categoryMappings : undefined,
-        }),
+      const result = await createPost({
+        title: data.title,
+        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+        tags,
+        draft: data.draft,
+        categoryMappings: Object.keys(categoryMappings).length > 0 ? categoryMappings : undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || '创建文章失败');
-      }
-
-      const result = await response.json();
       handleClose();
       onSuccess(result.postId, result.buildSync);
     } catch (error) {

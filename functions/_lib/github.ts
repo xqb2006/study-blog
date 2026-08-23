@@ -63,13 +63,9 @@ export function clearCookieHeader(name: string): string {
 }
 
 async function hmac(secret: string, value: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
+    'sign',
+  ]);
   const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(value));
   return btoa(String.fromCharCode(...new Uint8Array(signature)))
     .replace(/\+/g, '-')
@@ -78,7 +74,13 @@ async function hmac(secret: string, value: string): Promise<string> {
 }
 
 export async function createSession(context: any, user: SessionUser, accessToken: string): Promise<string> {
-  const payload = encodeBase64(JSON.stringify({ user: { login: user.login, avatar_url: user.avatar_url, name: user.name }, token: accessToken, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }))
+  const payload = encodeBase64(
+    JSON.stringify({
+      user: { login: user.login, avatar_url: user.avatar_url, name: user.name },
+      token: accessToken,
+      exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    }),
+  )
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
@@ -132,7 +134,15 @@ async function githubFetch(context: any, path: string, init: RequestInit = {}): 
       ...(init.headers ?? {}),
     },
   });
-  if (!response.ok) throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    const detail = await response.text();
+    if (response.status === 401) throw new Error('GitHub 登录已失效，请重新登录后台。');
+    if (response.status === 403) throw new Error('GitHub 拒绝了本次操作，请检查 OAuth 授权和仓库写入权限。');
+    if (response.status === 409) throw new Error('内容刚刚被其他保存操作更新，请刷新后台后再试。');
+    if (response.status === 422) throw new Error('GitHub 未接受本次保存：文件可能已存在或内容格式无效。请刷新后重试。');
+    console.error('[github] API request failed', response.status, path, detail.slice(0, 500));
+    throw new Error(`GitHub 服务请求失败（HTTP ${response.status}），请稍后重试。`);
+  }
   return response.status === 204 ? null : response.json();
 }
 
@@ -145,7 +155,11 @@ export async function listPostFiles(context: any): Promise<any[]> {
   return listRepositoryFiles(context, 'src/content/blog', /\.mdx?$/);
 }
 
-export async function listRepositoryFiles(context: any, directory: string, matcher?: RegExp): Promise<{ path: string; size: number; sha: string }[]> {
+export async function listRepositoryFiles(
+  context: any,
+  directory: string,
+  matcher?: RegExp,
+): Promise<{ path: string; size: number; sha: string }[]> {
   const data = await githubFetch(context, `/git/trees/${githubConfig(context).branch}?recursive=1`);
   const prefix = directory.replace(/^\/+|\/+$/g, '') + '/';
   return (data.tree as { path: string; type: string; size?: number; sha: string }[])
@@ -167,7 +181,12 @@ export async function putFile(context: any, filePath: string, content: string, m
   return githubFetch(context, `/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ message, content: encodeBase64(content), branch: githubConfig(context).branch, ...(sha ? { sha } : {}) }),
+    body: JSON.stringify({
+      message,
+      content: encodeBase64(content),
+      branch: githubConfig(context).branch,
+      ...(sha ? { sha } : {}),
+    }),
   });
 }
 
@@ -179,11 +198,7 @@ export async function putBase64File(context: any, filePath: string, base64Conten
   });
 }
 
-export async function putFiles(
-  context: any,
-  files: { path: string; content: string }[],
-  message: string,
-): Promise<void> {
+export async function putFiles(context: any, files: { path: string; content: string }[], message: string): Promise<void> {
   if (!files.length) return;
 
   const branch = githubConfig(context).branch;

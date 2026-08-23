@@ -7,28 +7,25 @@
 import { format, isValid, parse, parseISO } from 'date-fns';
 import type {
   BlogSchema,
+  BuildStatusResponse,
   CreatePostParams,
   CreatePostResponse,
   DeleteMediaResponse,
   DeletePostResponse,
-  BuildStatusResponse,
   ImportMarkdownParams,
   ImportMarkdownResponse,
   ListPostsParams,
   ListPostsResponse,
   MediaListResponse,
-  MediaTrashListResponse,
-  PurgeMediaResponse,
+  PurgeTrashResponse,
   ReadPostResult,
   RebuildBlogResponse,
-  RestoreMediaResponse,
+  RestoreTrashResponse,
   SaveSiteSettingsResponse,
   SiteSettings,
   SiteSettingsResponse,
   ToggleDraftResponse,
   ToggleStickyResponse,
-  PurgeTrashResponse,
-  RestoreTrashResponse,
   TrashListResponse,
   UploadMediaResponse,
   WritePostResponse,
@@ -236,7 +233,7 @@ export async function importMarkdown(params: ImportMarkdownParams): Promise<Impo
   if (params.title?.trim()) formData.append('title', params.title.trim());
   if (params.category?.trim()) formData.append('category', params.category.trim());
   if (params.tags?.trim()) formData.append('tags', params.tags.trim());
-  formData.append('draft', String(params.draft ?? true));
+  formData.append('draft', String(params.draft ?? false));
 
   const response = await fetch('/api/cms/import-markdown', {
     method: 'POST',
