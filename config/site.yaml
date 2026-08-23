@@ -33,7 +33,19 @@ categoryMap:
   操作系统: OS
   计算机网络: CN
   计算机组成原理: CO
-featuredCategories: []
+featuredCategories:
+  - link: Learning-insights
+    label: 学习心得
+    image: /img/cover/20.webp
+    description: 记录学习心得
+  - link: Mathematics
+    label: 数学
+    image: /img/cover/13.webp
+    description: 记录学习数学
+  - link: DS
+    label: 数据结构
+    image: /img/cover/15.webp
+    description: 记录学习算法
 featuredSeries: []
 social:
   rss:
