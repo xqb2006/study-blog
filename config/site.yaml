@@ -38,35 +38,8 @@ categoryMap:
   操作系统: OS
   计算机网络: CN
   计算机组成原理: CO
-featuredCategories:
-  - link: life
-    label: 随笔
-    image: /img/cover/2.webp
-    description: 生活记录、随想随笔
-  - link: note
-    label: 笔记
-    image: /img/cover/4.webp
-    description: 技术笔记、学习笔记
-  - link: tools
-    label: 工具
-    image: /img/cover/11.webp
-    description: 工具使用、效率提升
-  - link: websites
-    label: 网站推荐
-    image: /img/cover/12.webp
-    description: 值得收藏的网站、工具与服务推荐
-featuredSeries:
-  - slug: weekly
-    categoryName: 周刊
-    label: 我的周刊
-    fullName: 我的技术周刊
-    description: 记录博客更新、技术实践和阶段性整理。
-    cover: /img/weekly_header.webp
-    enabled: true
-    icon: ri:newspaper-line
-    highlightOnHome: true
-    links:
-      rss: /rss.xml
+featuredCategories: []
+featuredSeries: []
 social:
   rss:
     url: /rss.xml
