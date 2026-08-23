@@ -46,7 +46,15 @@ featuredCategories:
     label: 数据结构
     image: /img/cover/15.webp
     description: 记录学习算法
-featuredSeries: []
+featuredSeries:
+  - slug: Learning-insights
+    categoryName: 学习心得
+    label: 心得
+    fullName: 我的学习心得
+    cover: /img/cover/11.webp
+    enabled: true
+    icon: ri:newspaper-line
+    highlightOnHome: true
 social:
   rss:
     url: /rss.xml
