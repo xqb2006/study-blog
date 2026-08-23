@@ -1,8 +1,9 @@
 import { errorMessage, getPost, toPostPath } from '../../_lib/cms';
-import { json, makeMarkdown, putFile } from '../../_lib/github';
+import { json, makeMarkdown, putFile, requireSession } from '../../_lib/github';
 
 export const onRequestPost = async (context: any) => {
   try {
+    await requireSession(context);
     const { postId } = await context.request.json();
     const post = await getPost(context, postId);
     const draft = post.frontmatter.draft !== true;

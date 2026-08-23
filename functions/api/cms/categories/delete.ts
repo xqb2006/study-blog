@@ -1,8 +1,9 @@
 import { deleteCategory, errorMessage } from '../../../_lib/cms';
-import { json } from '../../../_lib/github';
+import { json, requireSession } from '../../../_lib/github';
 
 export const onRequestPost = async (context: any) => {
   try {
+    await requireSession(context);
     const { categoryName } = await context.request.json();
     const result = await deleteCategory(context, categoryName);
     return json({

@@ -1,8 +1,9 @@
 import { errorMessage, getSettings, saveSettings } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestGet = async (context: any) => {
   try {
+    await requireSession(context);
     const { settings } = await getSettings(context);
     return json({ success: true, configPath: 'config/site.yaml', settings });
   } catch (error) {
@@ -13,6 +14,7 @@ export const onRequestGet = async (context: any) => {
 
 export const onRequestPost = async (context: any) => {
   try {
+    await requireSession(context);
     const result = await saveSettings(context, await context.request.json());
     return json({
       success: true,

@@ -1,8 +1,9 @@
 import { errorMessage, getPost } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestGet = async (context: any) => {
   try {
+    await requireSession(context);
     const post = await getPost(context, new URL(context.request.url).searchParams.get('postId'));
     return json({ frontmatter: post.frontmatter, content: post.content });
   } catch (error) {

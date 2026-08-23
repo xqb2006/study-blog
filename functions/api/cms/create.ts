@@ -1,8 +1,9 @@
 import { createPost, createPostId, errorMessage } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestPost = async (context: any) => {
   try {
+    await requireSession(context);
     const body = await context.request.json();
     if (typeof body.title !== 'string' || !body.title.trim()) throw new Error('请输入文章标题。');
     const postId = createPostId(body.title);

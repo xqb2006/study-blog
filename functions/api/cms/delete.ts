@@ -1,8 +1,9 @@
 import { errorMessage, removePost } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestPost = async (context: any) => {
   try {
+    await requireSession(context);
     const { postId } = await context.request.json();
     await removePost(context, postId);
     return json({

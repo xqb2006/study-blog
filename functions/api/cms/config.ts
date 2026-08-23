@@ -1,8 +1,9 @@
 import { errorMessage, getSettings } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestGet = async (context: any) => {
   try {
+    await requireSession(context);
     const { settings } = await getSettings(context);
     return json({ projectRoot: 'GitHub repository', contentDir: 'src/content/blog', categoryMap: settings.categoryMap ?? {} });
   } catch (error) {

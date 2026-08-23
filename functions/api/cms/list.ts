@@ -1,8 +1,9 @@
 import { errorMessage, listPosts, normalizeStringList } from '../../_lib/cms';
-import { json } from '../../_lib/github';
+import { json, requireSession } from '../../_lib/github';
 
 export const onRequestGet = async (context: any) => {
   try {
+    await requireSession(context);
     const requestUrl = new URL(context.request.url);
     const status = requestUrl.searchParams.get('status');
     const category = requestUrl.searchParams.get('category')?.trim();
