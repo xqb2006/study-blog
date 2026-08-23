@@ -87,7 +87,7 @@ export function NavigationEditor({ value, rawText, onChange, onRawTextChange }: 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3">
         <div>
           <p className="font-medium text-sm">当前 {navigationItems.length} 个一级菜单</p>
-          <p className="text-muted-foreground text-xs">保存后会进入发布同步，可在发布同步查看 Public Blog 更新状态。</p>
+          <p className="text-muted-foreground text-xs">保存后会进入发布同步，可在“发布同步”查看博客前台的更新状态。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => commit(addNavigationItem(navigationItems, createEmptyNavigationItem()))}>

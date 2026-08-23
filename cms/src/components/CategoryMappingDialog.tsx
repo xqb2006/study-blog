@@ -92,10 +92,10 @@ export function CategoryMappingDialog({ open, onOpenChange, newCategories, onCon
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AppIcon name="ri:folder-add-line" className="size-5 text-primary" />
-            New Categories Detected
+            检测到新分类
           </DialogTitle>
           <DialogDescription>
-            The following categories are not in your site configuration. Please provide URL-friendly slugs for them.
+            下列分类尚未配置访问路径。请为它们填写适合 URL 使用的路径名称。
           </DialogDescription>
         </DialogHeader>
 
@@ -114,7 +114,7 @@ export function CategoryMappingDialog({ open, onOpenChange, newCategories, onCon
                     title="重新生成路径名"
                   >
                     <AppIcon name="ri:refresh-line" className="size-3.5" />
-                    Regenerate
+                    重新生成
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export function CategoryMappingDialog({ open, onOpenChange, newCategories, onCon
               ) : (
                 <>
                   <AppIcon name="ri:check-line" className="mr-1.5 size-4" />
-                  Confirm Mappings
+                  确认映射
                 </>
               )}
             </Button>

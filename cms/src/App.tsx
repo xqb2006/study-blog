@@ -209,7 +209,7 @@ function AppContent() {
   };
 
   const statCards = [
-    { label: 'Runtime Sync', value: runtimeSync?.success ? '已生成' : '待生成', delta: runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : '资料即时同步', icon: 'flashlight', tone: 'blue', action: () => setActiveTab('settings') },
+    { label: '资料即时同步', value: runtimeSync?.success ? '已生成' : '待生成', delta: runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : '资料即时同步', icon: 'flashlight', tone: 'blue', action: () => setActiveTab('settings') },
     { label: '总文章数', value: formatCount(totalPosts), delta: '打开文章书房', icon: 'file-text', tone: 'cyan', action: () => openPostsView('all') },
     { label: '草稿箱', value: formatCount(draftPosts), delta: '查看草稿文章', icon: 'draft', tone: 'purple', action: () => openPostsView('draft') },
   ];
@@ -219,7 +219,7 @@ function AppContent() {
     { label: '导入 Markdown', description: '上传文档或粘贴公开链接', icon: 'file-up', action: () => setIsImportDialogOpen(true) },
     { label: '上传素材', description: '进入素材库上传图片', icon: 'image-plus', action: () => setActiveTab('media') },
     { label: '修改装扮', description: '同步头像、社交链接和站点信息', icon: 'palette', action: () => setActiveTab('settings') },
-    { label: '查看博客', description: '打开 Public Blog 新窗口', icon: 'external-link', action: () => window.open(blogProfile.url, '_blank', 'noopener,noreferrer') },
+    { label: '查看博客', description: '在新窗口打开博客前台', icon: 'external-link', action: () => window.open(blogProfile.url, '_blank', 'noopener,noreferrer') },
   ];
 
   return (
@@ -239,7 +239,7 @@ function AppContent() {
                 <span>CMS</span>
               </span>
             </button>
-            <p className="sakura-logo-kicker">Content atelier</p>
+            <p className="sakura-logo-kicker">内容工作台</p>
           </div>
 
           <nav className="sakura-nav flex gap-2 overflow-x-auto px-3 pb-4 lg:block lg:space-y-1.5 lg:overflow-visible">
@@ -341,7 +341,7 @@ function AppContent() {
                     <section className="sakura-dashboard-main">
                       <div className="sakura-welcome">
                         <div>
-                          <p className="sakura-eyebrow">Workspace / Overview</p>
+                          <p className="sakura-eyebrow">工作台 / 概览</p>
                           <h1>
                             欢迎回来，
                             <span className="sakura-display-name">{blogProfile.author}</span>
@@ -378,7 +378,7 @@ function AppContent() {
                           <div className="sakura-analytics-grid">
                             <section className="sakura-panel sakura-sync-panel">
                               <div className="sakura-panel-header">
-                                <h2>Public Blog 发布</h2>
+                                <h2>博客前台发布</h2>
                               </div>
                               <div className="sakura-sync-summary">
                                 <span className="sakura-sync-icon status-unknown">
@@ -391,7 +391,7 @@ function AppContent() {
                               </div>
                               <div className="sakura-sync-grid">
                                 <button type="button" onClick={() => window.open(blogProfile.url, '_blank', 'noopener,noreferrer')}>
-                                  <span>Public Blog</span>
+                                  <span>博客前台</span>
                                   <strong>打开检查</strong>
                                   <small>{blogProfile.url}</small>
                                 </button>

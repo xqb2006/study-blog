@@ -99,7 +99,7 @@ export async function requestBuildSync(projectRoot: string): Promise<BuildSyncSu
       started: false,
       queued: false,
       failed: true,
-      message: '内容已保存；Public Blog 自动同步启动失败，请到发布同步手动重新同步',
+      message: '内容已保存；博客前台自动同步启动失败，请到“发布同步”手动重新同步。',
     };
   }
 }
@@ -124,7 +124,7 @@ export async function startBlogRebuild(projectRoot: string): Promise<{
   }
 
   if (!(await pathExists(scriptPath))) {
-    throw new Error('Rebuild script not found');
+    throw new Error('未找到博客重新构建脚本');
   }
 
   const child = spawn('sh', [scriptPath], {
@@ -147,7 +147,7 @@ export async function startBlogRebuild(projectRoot: string): Promise<{
       lastResult: 'running',
     },
     started: true,
-    message: '资料和素材已尽量即时同步；文章页面正在后台同步 Public Blog',
+    message: '资料和素材已尽量即时同步；文章页面正在后台同步博客前台。',
   };
 }
 

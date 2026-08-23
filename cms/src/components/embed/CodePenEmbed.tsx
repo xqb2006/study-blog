@@ -61,7 +61,7 @@ export function CodePenEmbed({ user, penId, url }: CodePenEmbedProps) {
         loading="lazy"
         allowFullScreen
       >
-        <a href={url}>See the Pen on CodePen</a>
+        <a href={url}>在 CodePen 中查看示例</a>
       </iframe>
     </div>
   );

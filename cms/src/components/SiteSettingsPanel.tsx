@@ -354,7 +354,7 @@ export function SiteSettingsPanel() {
                     <AppIcon name="ri:external-link-line" className="size-4" />
                     {previewUrl}
                   </a>
-                  <p className="mt-3 text-muted-foreground text-xs">身份资料会写入 Runtime Sync；静态结构变更会进入发布同步。</p>
+                  <p className="mt-3 text-muted-foreground text-xs">身份资料会写入即时资料同步；静态结构变更会进入发布同步。</p>
                 </div>
               </div>
             </Panel>

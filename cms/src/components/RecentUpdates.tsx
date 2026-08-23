@@ -36,7 +36,7 @@ export function RecentUpdates({ posts, maxDisplay = 5, onEdit }: RecentUpdatesPr
           </span>
           最近更新
         </h3>
-        <span className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-slate-500 text-xs uppercase tracking-[0.14em]">latest</span>
+        <span className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-slate-500 text-xs tracking-[0.14em]">最新</span>
       </div>
       <div className="space-y-2.5">
         {displayPosts.map((post) => (

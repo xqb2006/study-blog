@@ -395,7 +395,7 @@ async function writeRuntimeSiteSettings(projectRoot: string, config: Record<stri
     success: true,
     path: `/${RUNTIME_SETTINGS_RELATIVE_PATH.split(path.sep).join('/')}`,
     updatedAt,
-    message: 'Runtime Sync 已更新',
+    message: '即时资料同步已更新',
   };
 }
 
@@ -409,13 +409,13 @@ async function readRuntimeSyncSummary(projectRoot: string): Promise<RuntimeSyncS
       success: true,
       path: `/${RUNTIME_SETTINGS_RELATIVE_PATH.split(path.sep).join('/')}`,
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : stat.mtime.toISOString(),
-      message: 'Runtime Sync 可用',
+      message: '即时资料同步可用',
     };
   } catch {
     return {
       success: false,
       path: `/${RUNTIME_SETTINGS_RELATIVE_PATH.split(path.sep).join('/')}`,
-      message: 'Runtime Sync 尚未生成',
+      message: '即时资料同步尚未生成',
     };
   }
 }
@@ -570,7 +570,7 @@ export async function saveSiteSettingsHandler(c: Context) {
         success: true,
         settings: pickSettings(config),
         rebuildStarted: false,
-        rebuildMessage: '站点装扮已保存；Runtime Sync 已更新，Public Blog 可即时显示资料变更',
+        rebuildMessage: '站点装扮已保存；即时资料同步已更新，博客前台可即时显示资料变更。',
         runtimeSync,
       });
     }
