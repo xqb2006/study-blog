@@ -5,7 +5,7 @@
  */
 
 import type { FormEvent } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
@@ -38,15 +38,21 @@ export function ImportMarkdownDialog({ open, onOpenChange, existingCategories, o
     return [...new Set(options)];
   }, [existingCategories]);
 
+  useEffect(() => {
+    if (!categoryOptions.includes(category)) {
+      setCategory(categoryOptions[0] || '笔记');
+    }
+  }, [category, categoryOptions]);
+
   const reset = useCallback(() => {
     setMode('file');
     setFile(null);
     setUrl('');
     setTitle('');
-    setCategory('笔记');
+    setCategory(existingCategories[0] || '笔记');
     setTags('');
     setDraft(false);
-  }, []);
+  }, [existingCategories]);
 
   const handleClose = useCallback(
     (nextOpen: boolean) => {

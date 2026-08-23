@@ -126,6 +126,7 @@ function AppContent() {
     url: BLOG_URL,
   });
   const [runtimeSync, setRuntimeSync] = useState<RuntimeSyncSummary | null>(null);
+  const [configuredCategoryMap, setConfiguredCategoryMap] = useState<Record<string, string>>({});
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const {
     activeTab,
@@ -169,6 +170,7 @@ function AppContent() {
       const detail = (event as CustomEvent<{ settings?: SiteSettings; runtimeSync?: RuntimeSyncSummary } | SiteSettings>).detail;
       const settings = isSiteSettings(detail) ? detail : detail.settings;
       if (settings?.site) applySettings(settings);
+      if (settings?.categoryMap) setConfiguredCategoryMap(settings.categoryMap);
       if (!isSiteSettings(detail) && detail.runtimeSync) setRuntimeSync(detail.runtimeSync);
     };
 
@@ -177,6 +179,7 @@ function AppContent() {
     getSiteSettings()
       .then((response) => {
         applySettings(response.settings);
+        setConfiguredCategoryMap(response.settings.categoryMap || {});
         setRuntimeSync(response.runtimeSync || null);
       })
       .catch((err) => console.error('同步博客头像失败:', err));
@@ -197,6 +200,7 @@ function AppContent() {
   const draftPosts = data?.stats.draft ?? 0;
   const categoryStats = data?.stats.categoryStats.slice(0, 4) ?? [];
   const recentPosts = data?.stats.recentPosts ?? [];
+  const availableCategories = [...new Set([...(data?.categories || []), ...Object.keys(configuredCategoryMap)])].sort((left, right) => left.localeCompare(right, 'zh-CN'));
   const openPostsView = (nextStatus: StatusFilter = 'all') => {
     setSearch('');
     setCategory('');
@@ -587,13 +591,13 @@ function AppContent() {
       <CreatePostDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        existingCategories={data?.categories || []}
+        existingCategories={availableCategories}
         onSuccess={handleCreatePostSuccess}
       />
       <ImportMarkdownDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
-        existingCategories={data?.categories || []}
+        existingCategories={availableCategories}
         onSuccess={handleImportPostSuccess}
       />
       <ConfirmActionDialog

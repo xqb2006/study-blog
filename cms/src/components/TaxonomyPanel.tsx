@@ -198,6 +198,7 @@ export function TaxonomyPanel() {
       setFeaturedSeries(nextSeries);
       setSeriesLinksText(Object.fromEntries(nextSeries.map((series, index) => [index, linksToText(series.links)])));
       setIsDirty(false);
+      window.dispatchEvent(new CustomEvent('cms:site-settings-saved', { detail: response }));
       toast.success('分类与系列已保存');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '保存分类与系列失败');

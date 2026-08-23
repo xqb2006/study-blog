@@ -398,7 +398,9 @@ export async function getSiteSettings(): Promise<SiteSettingsResponse> {
     throw await readJsonError(response, `Failed to read site settings: ${response.status}`);
   }
 
-  return response.json();
+  const result = (await response.json()) as SiteSettingsResponse;
+  setCategoryMap(result.settings.categoryMap || {});
+  return result;
 }
 
 /**
