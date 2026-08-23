@@ -1,4 +1,4 @@
-﻿---
+---
 title: 欢迎来到我的博客
 description: 这是一个使用 Astro 构建的个人博客，记录学习、实践与生活。
 date: 2026-08-18 00:00:00
@@ -8,6 +8,7 @@ tags:
   - 博客
   - Astro
 cover: /img/cover/10.webp
+draft: true
 ---
 
 ## 从这里开始
