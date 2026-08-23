@@ -22,6 +22,7 @@ export type Tab =
 export type StatusFilter = 'all' | 'draft' | 'published';
 export type SortField = 'date' | 'updated' | 'title';
 export type SortOrder = 'asc' | 'desc';
+export type PendingPostDeletion = { postId: string; title: string } | null;
 
 export interface UseDashboardStateResult {
   activeTab: Tab;
@@ -45,6 +46,9 @@ export interface UseDashboardStateResult {
   handleToggleDraft: (postId: string) => Promise<void>;
   handleToggleSticky: (postId: string) => Promise<void>;
   handleDeletePost: (postId: string, title: string) => Promise<void>;
+  pendingPostDeletion: PendingPostDeletion;
+  confirmDeletePost: () => Promise<void>;
+  cancelDeletePost: () => void;
   handleCreatePostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
   handleImportPostSuccess: (postId: string, buildSync?: BuildSyncSummary) => void;
   handleEditPost: (postId: string) => void;
@@ -64,6 +68,7 @@ export function useDashboardState(): UseDashboardStateResult {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [pendingPostDeletion, setPendingPostDeletion] = useState<PendingPostDeletion>(null);
 
   const params = useMemo(
     () => ({
@@ -135,11 +140,17 @@ export function useDashboardState(): UseDashboardStateResult {
 
   const handleDeletePost = useCallback(
     async (postId: string, title: string) => {
-      const confirmed = window.confirm(`确定要永久删除《${title}》吗？文章会从 GitHub 仓库删除，后台无法恢复。`);
-      if (!confirmed) return;
+      setPendingPostDeletion({ postId, title });
+    },
+    [],
+  );
 
+  const confirmDeletePost = useCallback(
+    async () => {
+      if (!pendingPostDeletion) return;
       try {
-        const result = await deletePost(postId);
+        const result = await deletePost(pendingPostDeletion.postId);
+        setPendingPostDeletion(null);
         toast.success(`文章已删除；${result.buildSync?.message || 'Cloudflare Pages 正在自动部署。'}`);
         if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
         fetchData();
@@ -147,8 +158,10 @@ export function useDashboardState(): UseDashboardStateResult {
         toast.error(err instanceof Error ? err.message : '删除文章失败');
       }
     },
-    [fetchData],
+    [fetchData, pendingPostDeletion],
   );
+
+  const cancelDeletePost = useCallback(() => setPendingPostDeletion(null), []);
 
   const handleCreatePostSuccess = useCallback(
     (postId: string, buildSync?: BuildSyncSummary) => {
@@ -205,6 +218,9 @@ export function useDashboardState(): UseDashboardStateResult {
     handleToggleDraft,
     handleToggleSticky,
     handleDeletePost,
+    pendingPostDeletion,
+    confirmDeletePost,
+    cancelDeletePost,
     handleCreatePostSuccess,
     handleImportPostSuccess,
     handleEditPost,

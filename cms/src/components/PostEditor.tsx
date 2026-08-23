@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary';
 import { toast } from 'sonner';
 import { CategoryMappingDialog } from '@/components/CategoryMappingDialog';
+import { ConfirmActionDialog } from '@/components/ConfirmActionDialog';
 import { EditorTOC } from '@/components/EditorTOC';
 import { FrontmatterEditor, type FrontmatterEditorRef } from '@/components/FrontmatterEditor';
 import { MarkdownPreview } from '@/components/MarkdownPreview';
@@ -119,6 +120,7 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
   const [showSidebar, setShowSidebar] = useState(true);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('frontmatter');
   const [showBodyImagePicker, setShowBodyImagePicker] = useState(false);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
 
   // Sidebar resize state
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -350,8 +352,8 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
   // Handle close with unsaved changes check
   const handleClose = useCallback(() => {
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm('当前文章还有未保存的修改，确定要关闭吗？');
-      if (!confirmed) return;
+      setIsCloseConfirmOpen(true);
+      return;
     }
     onClose();
   }, [hasUnsavedChanges, onClose]);
@@ -631,6 +633,18 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
         description="选择后会插入到当前光标所在位置下方。"
         onOpenChange={setShowBodyImagePicker}
         onSelect={handleInsertImage}
+      />
+      <ConfirmActionDialog
+        open={isCloseConfirmOpen}
+        onOpenChange={setIsCloseConfirmOpen}
+        title="放弃未保存的文章修改？"
+        description="关闭编辑器后，当前未保存的标题、分类和正文修改都会丢失。"
+        confirmLabel="放弃并关闭"
+        destructive
+        onConfirm={() => {
+          setIsCloseConfirmOpen(false);
+          onClose();
+        }}
       />
     </div>
   );

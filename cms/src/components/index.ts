@@ -5,6 +5,7 @@
  */
 
 export { CategoryMappingDialog } from './CategoryMappingDialog';
+export { ConfirmActionDialog } from './ConfirmActionDialog';
 export { AnnouncementsPanel } from './AnnouncementsPanel';
 export { BgmPanel } from './BgmPanel';
 export { CategoryStats } from './CategoryStats';

@@ -2,10 +2,11 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { getSiteSettings, saveSiteSettings } from '@/lib/api';
+import { deleteCategory, getSiteSettings, saveSiteSettings } from '@/lib/api';
 import type { FeaturedCategoryItem, FeaturedSeriesItem, SiteSettings } from '@/types';
 import { Field, inputClassName, Panel, textareaClassName } from './dashboard/Panel';
 import { MediaPathField } from './MediaPathField';
+import { ConfirmActionDialog } from './ConfirmActionDialog';
 
 type CategoryMapRow = {
   name: string;
@@ -79,6 +80,9 @@ export function TaxonomyPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [categoryPendingDeletion, setCategoryPendingDeletion] = useState<CategoryMapRow | null>(null);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+  const [isReloadConfirmOpen, setIsReloadConfirmOpen] = useState(false);
 
   const markDirty = () => {
     setIsDirty(true);
@@ -88,11 +92,7 @@ export function TaxonomyPanel() {
     toast.info(`${label}已移除，点击“保存配置”后生效`);
   };
 
-  const loadSettings = async ({ force = false }: { force?: boolean } = {}) => {
-    if (!force && isDirty && !window.confirm('当前有未保存修改，重新读取会放弃这些修改。继续吗？')) {
-      return;
-    }
-
+  const loadSettings = async () => {
     setIsLoading(true);
     try {
       const response = await getSiteSettings();
@@ -110,7 +110,7 @@ export function TaxonomyPanel() {
   };
 
   useEffect(() => {
-    loadSettings({ force: true });
+    void loadSettings();
   }, []);
 
   useEffect(() => {
@@ -204,6 +204,29 @@ export function TaxonomyPanel() {
     }
   };
 
+  const requestReload = () => {
+    if (isDirty) {
+      setIsReloadConfirmOpen(true);
+      return;
+    }
+    void loadSettings();
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!categoryPendingDeletion) return;
+    setIsDeletingCategory(true);
+    try {
+      const result = await deleteCategory(categoryPendingDeletion.name);
+      setCategoryPendingDeletion(null);
+      await loadSettings();
+      toast.success(`已删除“${result.categoryName}”：清理 ${result.updatedPostIds.length} 篇文章、${result.removedFeaturedCategories} 个首页卡片和 ${result.removedFeaturedSeries} 个系列入口。`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除分类失败');
+    } finally {
+      setIsDeletingCategory(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -226,7 +249,7 @@ export function TaxonomyPanel() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => loadSettings()} disabled={isSaving}>
+          <Button variant="outline" onClick={requestReload} disabled={isSaving || isDeletingCategory}>
             <AppIcon name="ri:refresh-line" className="mr-1.5 size-4" />
             重新读取
           </Button>
@@ -300,11 +323,13 @@ export function TaxonomyPanel() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  markDirty();
-                  setCategoryRows((current) => current.filter((_, itemIndex) => itemIndex !== index));
-                  notifyPendingDelete('分类映射');
+                  if (isDirty) {
+                    toast.info('请先保存当前配置，或重新读取后再彻底删除分类。');
+                    return;
+                  }
+                  setCategoryPendingDeletion(row);
                 }}
-                title="删除映射，保存后生效"
+                title="彻底删除分类及其文章引用"
               >
                 <AppIcon name="ri:delete-bin-line" className="size-4" />
               </Button>
@@ -492,6 +517,33 @@ export function TaxonomyPanel() {
           {featuredSeries.length === 0 && <p className="text-muted-foreground text-sm">暂无精选系列。</p>}
         </div>
       </Panel>
+      <ConfirmActionDialog
+        open={Boolean(categoryPendingDeletion)}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingCategory) setCategoryPendingDeletion(null);
+        }}
+        title={`彻底删除分类“${categoryPendingDeletion?.name || ''}”`}
+        description="此操作会从所有使用该分类的文章中移除分类，同时删除 URL 映射、首页分类卡片和绑定该分类的系列入口。操作提交到 GitHub 后无法从后台恢复。"
+        confirmLabel="彻底删除分类"
+        pending={isDeletingCategory}
+        destructive
+        onConfirm={() => void handleDeleteCategory()}
+      >
+        <div className="border border-amber-200 bg-amber-50 p-3 text-amber-900 text-sm">
+          请确认：这不是只删除网址映射，而是删除分类在文章和站点配置中的全部引用。
+        </div>
+      </ConfirmActionDialog>
+      <ConfirmActionDialog
+        open={isReloadConfirmOpen}
+        onOpenChange={setIsReloadConfirmOpen}
+        title="放弃未保存修改？"
+        description="重新读取会恢复 GitHub 仓库中的配置，并丢弃当前页面尚未保存的修改。"
+        confirmLabel="放弃并重新读取"
+        onConfirm={() => {
+          setIsReloadConfirmOpen(false);
+          void loadSettings();
+        }}
+      />
     </div>
   );
 }

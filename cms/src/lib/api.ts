@@ -9,6 +9,7 @@ import type {
   BlogSchema,
   CreatePostParams,
   CreatePostResponse,
+  DeleteCategoryResponse,
   DeleteMediaResponse,
   DeletePostResponse,
   ImportMarkdownParams,
@@ -260,6 +261,22 @@ export async function deletePost(postId: string): Promise<DeletePostResponse> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || `Failed to delete post: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteCategory(categoryName: string): Promise<DeleteCategoryResponse> {
+  const response = await fetch('/api/cms/categories/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ categoryName }),
+  });
+
+  if (!response.ok) {
+    throw await readJsonError(response, `Failed to delete category: ${response.status}`);
   }
 
   return response.json();

@@ -269,6 +269,55 @@ export async function saveSettings(context: any, patch: unknown) {
   };
 }
 
+export async function deleteCategory(context: any, categoryName: unknown) {
+  await requireSession(context);
+  const name = typeof categoryName === 'string' ? categoryName.trim() : '';
+  if (!name) throw new Error('分类名称无效。');
+
+  const [posts, { settings }] = await Promise.all([listPosts(context), getSettings(context)]);
+  const updatedPostFiles: { path: string; content: string }[] = [];
+  const updatedPostIds: string[] = [];
+
+  for (const post of posts) {
+    if (!post.categories.includes(name)) continue;
+    const source = await getFile(context, toPostPath(post.id));
+    const parsed = parseMarkdown(source.content);
+    const frontmatter = { ...parsed.frontmatter };
+    delete frontmatter.categories;
+    updatedPostFiles.push({ path: toPostPath(post.id), content: makeMarkdown(frontmatter, parsed.content) });
+    updatedPostIds.push(post.id);
+  }
+
+  const categoryMap = isPlainObject(settings.categoryMap) ? { ...settings.categoryMap } : {};
+  const categorySlug = typeof categoryMap[name] === 'string' ? categoryMap[name] : undefined;
+  const removedMapping = Object.prototype.hasOwnProperty.call(categoryMap, name);
+  delete categoryMap[name];
+
+  const featuredCategories = Array.isArray(settings.featuredCategories) ? settings.featuredCategories : [];
+  const nextFeaturedCategories = featuredCategories.filter(
+    (item) => !isPlainObject(item) || (item.label !== name && (!categorySlug || item.link !== categorySlug)),
+  );
+  const featuredSeries = Array.isArray(settings.featuredSeries) ? settings.featuredSeries : [];
+  const nextFeaturedSeries = featuredSeries.filter((item) => !isPlainObject(item) || item.categoryName !== name);
+
+  const nextSettings = {
+    ...settings,
+    categoryMap,
+    featuredCategories: nextFeaturedCategories,
+    featuredSeries: nextFeaturedSeries,
+  };
+  const files = [...updatedPostFiles, { path: CONFIG_PATH, content: stringify(nextSettings) }];
+  await putFiles(context, files, `cms: 彻底删除分类 ${name}`);
+
+  return {
+    categoryName: name,
+    updatedPostIds,
+    removedMapping,
+    removedFeaturedCategories: featuredCategories.length - nextFeaturedCategories.length,
+    removedFeaturedSeries: featuredSeries.length - nextFeaturedSeries.length,
+  };
+}
+
 function mergeSettings(current: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
   const merged: Record<string, unknown> = { ...current };
   for (const [key, value] of Object.entries(patch)) {

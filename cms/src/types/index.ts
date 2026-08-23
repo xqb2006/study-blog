@@ -188,6 +188,16 @@ export interface DeletePostResponse {
   buildSync?: BuildSyncSummary;
 }
 
+export interface DeleteCategoryResponse {
+  success: boolean;
+  categoryName: string;
+  updatedPostIds: string[];
+  removedMapping: boolean;
+  removedFeaturedCategories: number;
+  removedFeaturedSeries: number;
+  buildSync?: BuildSyncSummary;
+}
+
 /**
  * Site settings exposed to the CMS dashboard.
  */

@@ -12,6 +12,7 @@ import {
   AnnouncementsPanel,
   BgmPanel,
   CategoryStats,
+  ConfirmActionDialog,
   CreatePostDialog,
   ErrorFallback,
   FriendsPanel,
@@ -148,6 +149,9 @@ function AppContent() {
     handleToggleDraft,
     handleToggleSticky,
     handleDeletePost,
+    pendingPostDeletion,
+    confirmDeletePost,
+    cancelDeletePost,
     handleCreatePostSuccess,
     handleImportPostSuccess,
     handleEditPost,
@@ -591,6 +595,17 @@ function AppContent() {
         onOpenChange={setIsImportDialogOpen}
         existingCategories={data?.categories || []}
         onSuccess={handleImportPostSuccess}
+      />
+      <ConfirmActionDialog
+        open={Boolean(pendingPostDeletion)}
+        onOpenChange={(open) => {
+          if (!open) cancelDeletePost();
+        }}
+        title={`永久删除《${pendingPostDeletion?.title || ''}》？`}
+        description="文章会从 GitHub 仓库删除。Cloudflare Pages 部署后，博客前台将不再展示；后台无法恢复。"
+        confirmLabel="永久删除文章"
+        destructive
+        onConfirm={() => void confirmDeletePost()}
       />
     </>
   );

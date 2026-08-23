@@ -7,6 +7,7 @@ import { getPageWindow } from '@/lib/pagination';
 import type { MediaFile } from '@/types';
 import { Field, inputClassName, Panel } from './dashboard/Panel';
 import { PaginationControls } from './dashboard/PaginationControls';
+import { ConfirmActionDialog } from './ConfirmActionDialog';
 
 function formatFileSize(size: number): string {
   if (size < 1024) return `${size} B`;
@@ -24,6 +25,7 @@ export function MediaLibraryPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingPath, setDeletingPath] = useState<string | null>(null);
+  const [mediaPendingDeletion, setMediaPendingDeletion] = useState<MediaFile | null>(null);
   const [search, setSearch] = useState('');
   const [uploadDirectory, setUploadDirectory] = useState('cms-uploads');
   const [page, setPage] = useState(1);
@@ -80,12 +82,14 @@ export function MediaLibraryPanel() {
     }
   };
 
-  const handleDelete = async (file: MediaFile) => {
-    if (!window.confirm(`确定永久删除 ${file.name} 吗？GitHub 提交后无法从后台恢复。`)) return;
+  const handleDelete = async () => {
+    if (!mediaPendingDeletion) return;
+    const file = mediaPendingDeletion;
     setDeletingPath(file.publicPath);
     try {
       await deleteMedia(file.publicPath);
       setFiles((current) => current.filter((item) => item.publicPath !== file.publicPath));
+      setMediaPendingDeletion(null);
       toast.success('图片已删除，并提交到 GitHub。');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '删除图片失败');
@@ -135,12 +139,24 @@ export function MediaLibraryPanel() {
           <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {pageWindow.items.map((file) => <article key={file.publicPath} className="overflow-hidden rounded-[1.25rem] border border-white/70 bg-white/62 shadow-[var(--cms-card-shadow)] backdrop-blur">
               <div className="aspect-[4/3] overflow-hidden bg-white/60"><img src={file.previewUrl || file.publicPath} alt={file.name} className="size-full object-cover" loading="lazy" /></div>
-              <div className="space-y-2 p-3"><h2 className="line-clamp-1 font-medium text-sm">{file.name}</h2><p className="line-clamp-2 break-all font-mono text-muted-foreground text-xs">{file.publicPath}</p><p className="text-muted-foreground text-xs">{formatFileSize(file.size)}</p><div className="flex gap-2"><Button variant="outline" size="sm" className="flex-1" onClick={() => void copyText(file.publicPath)}>复制路径</Button><Button variant="ghost" size="sm" onClick={() => void handleDelete(file)} disabled={deletingPath === file.publicPath}><AppIcon name={deletingPath === file.publicPath ? 'ri:loader-4-line' : 'ri:delete-bin-line'} className={deletingPath === file.publicPath ? 'mr-1.5 size-4 animate-spin' : 'mr-1.5 size-4'} />删除</Button></div></div>
+              <div className="space-y-2 p-3"><h2 className="line-clamp-1 font-medium text-sm">{file.name}</h2><p className="line-clamp-2 break-all font-mono text-muted-foreground text-xs">{file.publicPath}</p><p className="text-muted-foreground text-xs">{formatFileSize(file.size)}</p><div className="flex gap-2"><Button variant="outline" size="sm" className="flex-1" onClick={() => void copyText(file.publicPath)}>复制路径</Button><Button variant="ghost" size="sm" onClick={() => setMediaPendingDeletion(file)} disabled={deletingPath === file.publicPath}><AppIcon name={deletingPath === file.publicPath ? 'ri:loader-4-line' : 'ri:delete-bin-line'} className={deletingPath === file.publicPath ? 'mr-1.5 size-4 animate-spin' : 'mr-1.5 size-4'} />删除</Button></div></div>
             </article>)}
           </div>
         </div>
         <PaginationControls page={pageWindow.page} pageSize={pageWindow.pageSize} pageCount={pageWindow.pageCount} total={pageWindow.total} start={pageWindow.start} end={pageWindow.end} pageSizeOptions={[12, 24, 48]} onPageChange={setPage} onPageSizeChange={(nextPageSize) => { setPageSize(nextPageSize); setPage(1); }} />
       </>}
+      <ConfirmActionDialog
+        open={Boolean(mediaPendingDeletion)}
+        onOpenChange={(open) => {
+          if (!open && !deletingPath) setMediaPendingDeletion(null);
+        }}
+        title={`永久删除“${mediaPendingDeletion?.name || ''}”？`}
+        description="图片会从 GitHub 仓库删除。Cloudflare Pages 部署后，网站中使用这张图片的位置可能无法显示；后台无法恢复。"
+        confirmLabel="永久删除图片"
+        pending={Boolean(deletingPath)}
+        destructive
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }
