@@ -7,7 +7,6 @@
 export { CategoryMappingDialog } from './CategoryMappingDialog';
 export { AnnouncementsPanel } from './AnnouncementsPanel';
 export { BgmPanel } from './BgmPanel';
-export { BuildStatusPanel } from './BuildStatusPanel';
 export { CategoryStats } from './CategoryStats';
 export { ContentSettingsEditor } from './ContentSettingsEditor';
 export { CreatePostDialog } from './CreatePostDialog';

@@ -135,12 +135,12 @@ export function useDashboardState(): UseDashboardStateResult {
 
   const handleDeletePost = useCallback(
     async (postId: string, title: string) => {
-      const confirmed = window.confirm(`确定要删除《${title}》吗？文章会移入回收站，博客前台将不再展示。`);
+      const confirmed = window.confirm(`确定要永久删除《${title}》吗？文章会从 GitHub 仓库删除，后台无法恢复。`);
       if (!confirmed) return;
 
       try {
         const result = await deletePost(postId);
-        toast.success(`文章已移入回收站；${result.buildSync?.message || '发布同步已请求'}`);
+        toast.success(`文章已删除；${result.buildSync?.message || 'Cloudflare Pages 正在自动部署。'}`);
         if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
         fetchData();
       } catch (err) {

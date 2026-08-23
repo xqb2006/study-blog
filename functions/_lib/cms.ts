@@ -25,6 +25,20 @@ export function ensurePostId(postId: unknown): string {
   return normalized;
 }
 
+export function createPostId(title: unknown, fallback = 'post'): string {
+  const titleSlug =
+    typeof title === 'string'
+      ? title
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+      : '';
+  const timestamp = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/[-: T]/g, '');
+  const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
+  return ensurePostId(`${timestamp}-${titleSlug || fallback}-${suffix}.md`);
+}
+
 export function toPostPath(postId: string): string {
   return `${CONTENT_DIR}/${ensurePostId(postId)}`;
 }

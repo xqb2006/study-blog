@@ -1,4 +1,4 @@
-import { createPost, ensurePostId, errorMessage } from '../../_lib/cms';
+import { createPost, createPostId, errorMessage } from '../../_lib/cms';
 import { json, parseMarkdown, requireSession } from '../../_lib/github';
 
 export const onRequestPost = async (context: any) => {
@@ -18,9 +18,7 @@ export const onRequestPost = async (context: any) => {
     const imported = parseMarkdown(source);
     const title =
       requestedTitle || (typeof imported.frontmatter.title === 'string' ? imported.frontmatter.title.trim() : '') || '导入文章';
-    const postId = ensurePostId(
-      `${title.replace(/[^a-zA-Z0-9\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '') || `import-${Date.now()}`}.md`,
-    );
+    const postId = createPostId(title, 'import');
     const categories = String(form.get('category') || '')
       .split(',')
       .map((item) => item.trim())

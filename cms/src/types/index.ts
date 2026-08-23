@@ -185,12 +185,6 @@ export interface ToggleStickyResponse {
 export interface DeletePostResponse {
   success: boolean;
   deleted: boolean;
-  trashPath?: string;
-  trashPaths?: string[];
-  trashId?: string;
-  deletedPostIds?: string[];
-  clearedPagePaths?: string[];
-  deletedRoutes?: string[];
   buildSync?: BuildSyncSummary;
 }
 
@@ -476,54 +470,6 @@ export interface DeleteMediaResponse {
   success: boolean;
   deleted: boolean;
   publicPath: string;
-  trashPath: string;
-}
-
-export interface MediaTrashFile {
-  trashId: string;
-  name: string;
-  trashPath: string;
-  publicPath: string;
-  relativePath: string;
-  size: number;
-  modifiedAt: string;
-  extension: string;
-  deletedAt: string;
-}
-
-export interface MediaTrashListResponse {
-  success: boolean;
-  root: string;
-  files: MediaTrashFile[];
-}
-
-export interface RestoreMediaResponse {
-  success: boolean;
-  restored: boolean;
-  trashPath: string;
-  file: MediaFile;
-}
-
-export interface PurgeMediaResponse {
-  success: boolean;
-  purged: boolean;
-  trashPath: string;
-}
-
-export interface BuildStatusResponse {
-  success: boolean;
-  isRunning: boolean;
-  isPending?: boolean;
-  lastResult: 'success' | 'failed' | 'running' | 'unknown';
-  log: string;
-  logPath: string;
-  distUpdatedAt?: string;
-  pendingSince?: string;
-}
-
-export interface RebuildBlogResponse extends BuildStatusResponse {
-  started: boolean;
-  message: string;
 }
 
 export interface BuildSyncSummary {
@@ -531,7 +477,6 @@ export interface BuildSyncSummary {
   queued: boolean;
   failed: boolean;
   message: string;
-  status?: BuildStatusResponse;
 }
 
 export interface RuntimeSyncSummary {
@@ -539,43 +484,4 @@ export interface RuntimeSyncSummary {
   path: string;
   updatedAt?: string;
   message: string;
-}
-
-export interface TrashFile {
-  postId: string;
-  trashPath: string;
-  title: string;
-  date?: string;
-  draft?: boolean;
-  size: number;
-  modifiedAt: string;
-}
-
-export interface TrashEntry {
-  trashId: string;
-  deletedAt?: string;
-  primaryTitle: string;
-  fileCount: number;
-  totalSize: number;
-  files: TrashFile[];
-}
-
-export interface TrashListResponse {
-  success: boolean;
-  entries: TrashEntry[];
-}
-
-export interface RestoreTrashResponse {
-  success: boolean;
-  restored: boolean;
-  trashId: string;
-  restoredPostIds: string[];
-  removedDeletedRoutes?: string[];
-  buildSync?: BuildSyncSummary;
-}
-
-export interface PurgeTrashResponse {
-  success: boolean;
-  purged: boolean;
-  trashId: string;
 }

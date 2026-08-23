@@ -1,8 +1,7 @@
 /**
  * OG Data Service
  *
- * Manages fetching and caching of Open Graph metadata for link previews.
- * Uses the shared cache file at .cache/og-data.json
+ * Provides a client-side fallback for link previews in the static CMS.
  */
 
 export interface OGData {
@@ -30,18 +29,9 @@ const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 let memoryCache: CacheData = {};
 
 /**
- * Load cache from API (server reads .cache/og-data.json)
+ * Returns the in-memory cache.
  */
 export async function loadCache(): Promise<CacheData> {
-  try {
-    const response = await fetch('/api/cms/og-cache');
-    if (response.ok) {
-      memoryCache = await response.json();
-      return memoryCache;
-    }
-  } catch (error) {
-    console.warn('[OG Service] Failed to load cache:', error);
-  }
   return memoryCache;
 }
 
@@ -69,30 +59,17 @@ export function updateMemoryCache(url: string, data: OGData): void {
 }
 
 /**
- * Fetch OG data from API
+ * Builds a local fallback when server-side OG extraction is unavailable.
  */
 export async function fetchOGData(url: string): Promise<OGData> {
+  let title = url;
   try {
-    const response = await fetch(`/api/cms/og-data?url=${encodeURIComponent(url)}`);
+    title = new URL(url).hostname;
+  } catch {}
 
-    if (!response.ok) {
-      throw new Error(`API responded with ${response.status}`);
-    }
-
-    const data = (await response.json()) as OGData;
-
-    // Update memory cache
-    updateMemoryCache(url, data);
-
-    return data;
-  } catch (error) {
-    console.warn('[OG Service] Failed to fetch OG data:', error);
-    return {
-      originUrl: url,
-      url,
-      error: error instanceof Error ? error.message : 'Failed to fetch',
-    };
-  }
+  const data = { originUrl: url, url, title };
+  updateMemoryCache(url, data);
+  return data;
 }
 
 /**
@@ -105,7 +82,6 @@ export async function getOGData(url: string): Promise<OGData> {
     return cached;
   }
 
-  // Fetch from API
   return fetchOGData(url);
 }
 
@@ -126,7 +102,6 @@ export async function batchLoadOGData(urls: string[]): Promise<Map<string, OGDat
     }
   }
 
-  // Fetch uncached URLs in parallel
   if (uncachedUrls.length > 0) {
     const fetchPromises = uncachedUrls.map(async (url) => {
       const data = await fetchOGData(url);

@@ -1,19 +1,5 @@
-import { createPost, ensurePostId, errorMessage } from '../../_lib/cms';
+import { createPost, createPostId, errorMessage } from '../../_lib/cms';
 import { json } from '../../_lib/github';
-
-function slugify(title: string): string {
-  const latin = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return latin || `post-${Date.now()}`;
-}
-
-function createPostId(title: string): string {
-  const timestamp = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai' }).replace(/[-: T]/g, '');
-  return ensurePostId(`${timestamp}-${slugify(title)}.md`);
-}
 
 export const onRequestPost = async (context: any) => {
   try {

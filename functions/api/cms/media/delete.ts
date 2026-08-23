@@ -9,7 +9,7 @@ export const onRequestPost = async (context: any) => {
     const path = `public${publicPath}`;
     const file = await getFile(context, path);
     await deleteFile(context, path, file.sha, `cms: 删除图片 ${publicPath}`);
-    return json({ success: true, deleted: true, publicPath, trashPath: '' });
+    return json({ success: true, deleted: true, publicPath });
   } catch (error) {
     if (error instanceof Response) return error;
     return json({ error: errorMessage(error) }, 500);

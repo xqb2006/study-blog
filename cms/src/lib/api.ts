@@ -7,7 +7,6 @@
 import { format, isValid, parse, parseISO } from 'date-fns';
 import type {
   BlogSchema,
-  BuildStatusResponse,
   CreatePostParams,
   CreatePostResponse,
   DeleteMediaResponse,
@@ -17,16 +16,12 @@ import type {
   ListPostsParams,
   ListPostsResponse,
   MediaListResponse,
-  PurgeTrashResponse,
   ReadPostResult,
-  RebuildBlogResponse,
-  RestoreTrashResponse,
   SaveSiteSettingsResponse,
   SiteSettings,
   SiteSettingsResponse,
   ToggleDraftResponse,
   ToggleStickyResponse,
-  TrashListResponse,
   UploadMediaResponse,
   WritePostResponse,
 } from '@/types';
@@ -425,7 +420,7 @@ export async function uploadMedia(file: File, directory: string): Promise<Upload
 }
 
 /**
- * Moves a media asset to the CMS media trash.
+ * Permanently deletes a media asset from the GitHub repository.
  */
 export async function deleteMedia(publicPath: string): Promise<DeleteMediaResponse> {
   const response = await fetch('/api/cms/media/delete', {
@@ -438,85 +433,6 @@ export async function deleteMedia(publicPath: string): Promise<DeleteMediaRespon
 
   if (!response.ok) {
     throw await readJsonError(response, `Failed to delete media: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Reads current blog build status and recent build log.
- */
-export async function getBuildStatus(): Promise<BuildStatusResponse> {
-  const response = await fetch('/api/cms/build/status');
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to read build status: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Starts a background blog rebuild.
- */
-export async function rebuildBlog(): Promise<RebuildBlogResponse> {
-  const response = await fetch('/api/cms/build/rebuild', {
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to start rebuild: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Lists soft-deleted blog posts in the CMS trash folder.
- */
-export async function listTrash(): Promise<TrashListResponse> {
-  const response = await fetch('/api/cms/trash');
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to list trash: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Restores all posts from a trash batch.
- */
-export async function restoreTrash(trashId: string): Promise<RestoreTrashResponse> {
-  const response = await fetch('/api/cms/trash/restore', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ trashId }),
-  });
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to restore trash: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Permanently removes a trash batch.
- */
-export async function purgeTrash(trashId: string): Promise<PurgeTrashResponse> {
-  const response = await fetch('/api/cms/trash/purge', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ trashId }),
-  });
-
-  if (!response.ok) {
-    throw await readJsonError(response, `Failed to purge trash: ${response.status}`);
   }
 
   return response.json();

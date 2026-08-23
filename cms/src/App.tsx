@@ -27,9 +27,9 @@ import {
 import { AmbientCanvas } from '@/components/AmbientCanvas';
 import { Button } from '@/components/ui/button';
 import { type StatusFilter, type Tab, useDashboardState } from '@/hooks';
-import { getBuildStatus, getSiteSettings } from '@/lib/api';
+import { getSiteSettings } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import type { BuildStatusResponse, BuildSyncSummary, RuntimeSyncSummary, SiteSettings } from '@/types';
+import type { RuntimeSyncSummary, SiteSettings } from '@/types';
 
 const BLOG_URL = 'http://localhost:4321';
 const BLOG_FALLBACK_AVATAR = `${BLOG_URL}/img/avatar.webp`;
@@ -78,13 +78,6 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('zh-CN', {
   minute: '2-digit',
 });
 
-const BUILD_STATUS_META: Record<BuildStatusResponse['lastResult'], { label: string; icon: string; className: string }> = {
-  success: { label: '已同步', icon: 'check-circle-2', className: 'status-success' },
-  failed: { label: '同步失败', icon: 'alert-triangle', className: 'status-failed' },
-  running: { label: '同步中', icon: 'loader-2', className: 'status-running' },
-  unknown: { label: '待确认', icon: 'circle-help', className: 'status-unknown' },
-};
-
 function resolveBlogAssetUrl(value?: string, baseUrl = BLOG_URL) {
   if (!value) return BLOG_FALLBACK_AVATAR;
   if (/^https?:\/\//i.test(value)) return value;
@@ -132,7 +125,6 @@ function AppContent() {
     url: BLOG_URL,
   });
   const [runtimeSync, setRuntimeSync] = useState<RuntimeSyncSummary | null>(null);
-  const [buildStatus, setBuildStatus] = useState<BuildStatusResponse | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const {
     activeTab,
@@ -191,36 +183,6 @@ function AppContent() {
     };
   }, []);
 
-  const loadBuildStatus = async () => {
-    try {
-      setBuildStatus(await getBuildStatus());
-    } catch (err) {
-      console.error('读取发布同步状态失败:', err);
-    }
-  };
-
-  useEffect(() => {
-    const handleBuildSyncRequested = (event: Event) => {
-      const buildSync = (event as CustomEvent<BuildSyncSummary>).detail;
-      if (buildSync?.status) setBuildStatus(buildSync.status);
-      window.setTimeout(() => void loadBuildStatus(), 500);
-      window.setTimeout(() => void loadBuildStatus(), 2000);
-    };
-
-    window.addEventListener('cms:build-sync-requested', handleBuildSyncRequested);
-    return () => window.removeEventListener('cms:build-sync-requested', handleBuildSyncRequested);
-  }, []);
-
-  useEffect(() => {
-    void loadBuildStatus();
-  }, []);
-
-  useEffect(() => {
-    if (!buildStatus?.isRunning && !buildStatus?.isPending) return;
-    const timer = window.setInterval(() => void loadBuildStatus(), 2000);
-    return () => window.clearInterval(timer);
-  }, [buildStatus?.isPending, buildStatus?.isRunning]);
-
   if (editingPostId) {
     return <PostEditor postId={editingPostId} onClose={handleEditorClose} onSaved={handleEditorSaved} />;
   }
@@ -231,8 +193,6 @@ function AppContent() {
   const draftPosts = data?.stats.draft ?? 0;
   const categoryStats = data?.stats.categoryStats.slice(0, 4) ?? [];
   const recentPosts = data?.stats.recentPosts ?? [];
-  const buildMeta = BUILD_STATUS_META[buildStatus?.lastResult || 'unknown'];
-  const buildLabel = buildStatus?.isRunning ? '同步中' : buildStatus?.isPending ? '已排队' : buildMeta.label;
   const openPostsView = (nextStatus: StatusFilter = 'all') => {
     setSearch('');
     setCategory('');
@@ -410,56 +370,29 @@ function AppContent() {
                           <div className="sakura-analytics-grid">
                             <section className="sakura-panel sakura-sync-panel">
                               <div className="sakura-panel-header">
-                                <h2>Public Blog 状态</h2>
-                                <button type="button" onClick={() => void loadBuildStatus()} aria-label="刷新发布同步状态">
-                                  <AppIcon name="refresh" className="size-4" />
-                                </button>
+                                <h2>Public Blog 发布</h2>
                               </div>
                               <div className="sakura-sync-summary">
-                                <span className={cn('sakura-sync-icon', buildMeta.className)}>
-                                  <AppIcon name={buildMeta.icon} className={cn('size-7', buildStatus?.isRunning && 'animate-spin')} />
+                                <span className="sakura-sync-icon status-unknown">
+                                  <AppIcon name="circle-help" className="size-7" />
                                 </span>
                                 <div>
-                                  <strong>{buildLabel}</strong>
-                                  <p>
-                                    {buildStatus?.lastResult === 'failed'
-                                      ? '上次 Build Sync 失败，进入发布同步查看日志并重新同步。'
-                                      : buildStatus?.isRunning
-                                        ? 'Build Sync 正在运行，完成后 Public Blog 会更新静态内容。'
-                                        : buildStatus?.isPending
-                                          ? '已有新的静态内容变更排队，当前同步结束后会继续执行。'
-                                          : '没有运行中的 Build Sync。Runtime Sync 资料会即时写入运行时文件。'}
-                                  </p>
+                                  <strong>Cloudflare 自动部署</strong>
+                                  <p>文章、图片和设置保存后会提交到 GitHub。Cloudflare Pages 会自动构建；真实进度和日志请在 Cloudflare 控制台查看。</p>
                                 </div>
                               </div>
                               <div className="sakura-sync-grid">
-                                <button type="button" onClick={() => window.open(blogProfile.url, '_blank', 'noopener,noreferrer')}>
-                                  <span>Build Sync</span>
-                                  <strong>{buildLabel}</strong>
-                                  <small>{buildStatus?.distUpdatedAt ? `dist ${formatSyncTime(buildStatus.distUpdatedAt)}` : '暂无 dist 时间'}</small>
-                                </button>
-                                <button type="button" onClick={() => setActiveTab('settings')}>
-                                  <span>Runtime Sync</span>
-                                  <strong>{runtimeSync?.success ? '已可用' : '待生成'}</strong>
-                                  <small>{runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : runtimeSync?.message || '资料保存后生成'}</small>
-                                </button>
                                 <button type="button" onClick={() => window.open(blogProfile.url, '_blank', 'noopener,noreferrer')}>
                                   <span>Public Blog</span>
                                   <strong>打开检查</strong>
                                   <small>{blogProfile.url}</small>
                                 </button>
                                 <button type="button" onClick={() => setActiveTab('settings')}>
-                                  <span>日志</span>
-                                  <strong>{buildStatus?.log?.trim() ? '可查看' : '暂无日志'}</strong>
-                                  <small>{buildStatus?.logPath || '.cache/cms/rebuild-blog.log'}</small>
+                                  <span>站点设置</span>
+                                  <strong>{runtimeSync?.success ? '已可用' : '待生成'}</strong>
+                                  <small>{runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : runtimeSync?.message || '资料保存后生成'}</small>
                                 </button>
                               </div>
-                              {buildStatus?.lastResult === 'failed' && (
-                                <button type="button" className="sakura-sync-warning" onClick={() => setActiveTab('settings')}>
-                                  <AppIcon name="alert-triangle" className="size-4" />
-                                  内容已保存，但 Public Blog 上次同步失败。打开发布同步查看日志。
-                                </button>
-                              )}
                             </section>
 
                             <section className="sakura-panel">
