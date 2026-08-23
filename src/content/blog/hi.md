@@ -1,6 +1,6 @@
 ---
 title: hi
-draft: true
+draft: false
 sticky: false
 tocNumbering: true
 excludeFromSummary: false
