@@ -192,6 +192,7 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
         void blocksToMarkdown(editor).then((markdown) => {
           if (contentSyncVersion.current === version) {
             setReadinessContent(markdown);
+            setPreviewContent(markdown);
           }
         });
       }
@@ -611,7 +612,7 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
               )}
               {sidebarTab === 'preview' && (
                 <div className="p-4">
-                  <MarkdownPreview content={previewContent} />
+                  <MarkdownPreview content={previewContent} enableMath={frontmatter.math !== false} />
                 </div>
               )}
             </div>

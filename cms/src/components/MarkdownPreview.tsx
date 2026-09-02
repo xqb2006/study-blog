@@ -11,14 +11,18 @@
 
 import { AppIcon } from '@/components/ui/app-icon';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import renderMathInElement from 'katex/contrib/auto-render';
 import { renderMarkdown } from '@/lib/markdown-render';
 import { enhancePreviewContent } from '@/lib/preview-enhancer';
 import { EmbedHydrator } from './EmbedHydrator';
+import 'katex/dist/katex.min.css';
 import '@/styles/preview.css';
 
 interface MarkdownPreviewProps {
   /** Markdown content to render */
   content: string;
+  /** Whether LaTeX math should render in the preview */
+  enableMath?: boolean;
 }
 
 /**
@@ -65,7 +69,7 @@ function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
   );
 }
 
-export function MarkdownPreview({ content }: MarkdownPreviewProps) {
+export function MarkdownPreview({ content, enableMath = true }: MarkdownPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [html, setHtml] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -109,6 +113,19 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
     // Small delay to ensure DOM is updated
     const timeoutId = setTimeout(async () => {
       if (containerRef.current) {
+        if (enableMath) {
+          renderMathInElement(containerRef.current, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '\\[', right: '\\]', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+            ],
+            throwOnError: false,
+            ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code', 'option'],
+          });
+        }
+
         await enhancePreviewContent(containerRef.current, {
           onImageClick: setLightboxSrc,
         });
@@ -118,7 +135,7 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
     }, 50);
 
     return () => clearTimeout(timeoutId);
-  }, [html, isLoading]);
+  }, [html, isLoading, enableMath]);
 
   // 关闭 lightbox handler
   const closeLightbox = useCallback(() => {
@@ -145,6 +162,7 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
   return (
     <>
       <div
+        key={enableMath ? 'math-enabled' : 'math-disabled'}
         ref={containerRef}
         className="preview-content"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Markdown rendering requires innerHTML
