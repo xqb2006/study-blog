@@ -19,7 +19,7 @@ export interface CoverProps {
 
 const { data, title } = Astro.props as CoverProps;
 
-const { date, updated, title: dataTitle, draft } = data?.data ?? {};
+const { date, updated, title: dataTitle, subtitle: dataSubtitle, draft } = data?.data ?? {};
 
 const readState = data ? getPostReadingTime(data) : null;
 const isDraft = import.meta.env.DEV && draft === true;
@@ -65,6 +65,7 @@ const pageStatsConfig = href ? createArticleStatsConfig(href) : null;
               </span>
             )}
           </h1>
+          {dataSubtitle && <p class={`shadow-text mt-3 text-center text-base md:text-lg ${MAX_WIDTH.content}`}>{dataSubtitle}</p>}
           {data && (
             <p class="mt-3 flex flex-wrap items-center justify-center gap-4 md:text-xs">
               <span class="flex items-center gap-1">

@@ -10,9 +10,10 @@ import RelatedPostList from './RelatedPostList';
 
 interface Props {
   post?: BlogPost;
+  hideRecommendations?: boolean;
 }
 
-const { post } = Astro.props;
+const { post, hideRecommendations = false } = Astro.props;
 const locale = getLocaleFromUrl(Astro.url.pathname);
 
 // Check if similarity data is available
@@ -20,6 +21,7 @@ const hasData = hasSimilarityData();
 
 // Get all posts
 const allPosts = await getSortedPosts(locale);
+const similarityPosts = allPosts.filter((item) => item.data.excludeFromSummary !== true);
 const totalPosts = allPosts.length;
 
 // Calculate how many posts to show on each side
@@ -34,7 +36,7 @@ const leftPool = totalPosts <= 10 ? allPostItems : allPostItems.slice(0, Math.fl
 const rightPool = totalPosts <= 10 ? allPostItems : allPostItems.slice(Math.floor(totalPosts / 2));
 
 // Get related posts if current post is provided and similarity data exists
-const relatedPosts = hasData && post ? getRelatedPosts(post, allPosts, 5).map(toPostRefWithCategory) : [];
+const relatedPosts = hasData && post && !hideRecommendations ? getRelatedPosts(post, similarityPosts, 5).map(toPostRefWithCategory) : [];
 ---
 
 <div class="tablet:grid-cols-1 grid grid-cols-2 gap-4 px-10 md:px-6">

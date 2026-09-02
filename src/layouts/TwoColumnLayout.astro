@@ -19,7 +19,7 @@ const { className, post } = Astro.props;
     <slot name="sider" />
     <div class="flex min-w-0 grow flex-col gap-8 md:w-full">
       <slot />
-      <PostFooter post={post} />
+      <PostFooter post={post} hideRecommendations={post?.data.excludeFromSummary === true} />
       <Footer />
     </div>
   </div>

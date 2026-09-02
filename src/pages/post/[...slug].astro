@@ -50,7 +50,16 @@ const canonicalUrl = isFallback
   ? new URL(localizedPath(`/post/${encodeSlug(getPostSlug(post))}`, defaultLocale), Astro.site).href
   : undefined;
 const { Content } = await post.render();
-const { title, categories = [], tags = [], date, math: postMath, keywords: postKeywords = [] } = post?.data ?? {};
+const {
+  title,
+  categories = [],
+  tags = [],
+  date,
+  math: postMath,
+  quiz: postQuiz,
+  excludeFromSummary = false,
+  keywords: postKeywords = [],
+} = post?.data ?? {};
 // KaTeX CSS: only load when global enableMath is on AND post hasn't opted out.
 // When enableMath is false globally, rehype-katex is not in the pipeline, so no math is rendered.
 const hasMath = defaultContentConfig.enableMath !== false && postMath !== false;
@@ -131,20 +140,22 @@ const postSlug = getPostSlug(post);
 let summaryText: string | null = null;
 let summarySource: SummarySource | null = null;
 
-if (post.data.description) {
-  // 优先使用手写描述
-  summaryText = post.data.description;
-  summarySource = 'description';
-} else {
-  // 尝试获取 AI 摘要
-  const aiSummary = getPostSummary(postSlug);
-  if (aiSummary) {
-    summaryText = aiSummary;
-    summarySource = 'ai';
+if (!excludeFromSummary) {
+  if (post.data.description) {
+    // 优先使用手写描述
+    summaryText = post.data.description;
+    summarySource = 'description';
   } else {
-    // 降级到自动提取
-    summaryText = extractTextFromMarkdown(post.body, 200);
-    summarySource = 'auto';
+    // 尝试获取 AI 摘要
+    const aiSummary = getPostSummary(postSlug);
+    if (aiSummary) {
+      summaryText = aiSummary;
+      summarySource = 'ai';
+    } else {
+      // 降级到自动提取
+      summaryText = extractTextFromMarkdown(post.body, 200);
+      summarySource = 'auto';
+    }
   }
 }
 ---
@@ -204,7 +215,7 @@ if (post.data.description) {
         )
       }
       <article class="prose md:prose-sm dark:prose-invert" data-pagefind-body>
-        <CustomContent Content={Content} />
+        <CustomContent Content={Content} config={{ enableQuiz: postQuiz ?? defaultContentConfig.enableQuiz ?? true }} />
       </article>
       <Comment />
     </div>

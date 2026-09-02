@@ -213,7 +213,7 @@ export const FrontmatterEditor = forwardRef<FrontmatterEditorRef, FrontmatterEdi
       sticky: frontmatter.sticky ?? false,
       tocNumbering: frontmatter.tocNumbering ?? true,
       excludeFromSummary: frontmatter.excludeFromSummary ?? false,
-      math: frontmatter.math ?? false,
+      math: frontmatter.math ?? true,
       quiz: frontmatter.quiz ?? false,
     },
   });
@@ -305,9 +305,9 @@ export const FrontmatterEditor = forwardRef<FrontmatterEditorRef, FrontmatterEdi
             <FormCheckbox label="草稿" id="draft" description="开启后前台不会发布展示" {...register('draft')} />
             <FormCheckbox label="置顶" id="sticky" description="在文章列表中优先显示" {...register('sticky')} />
             <FormCheckbox label="目录编号" id="tocNumbering" description="为标题目录添加层级编号" {...register('tocNumbering')} />
-            <FormCheckbox label="排除 AI 摘要" id="excludeFromSummary" description="跳过 AI 摘要生成" {...register('excludeFromSummary')} />
-            <FormCheckbox label="数学公式（LaTeX）" id="math" description="启用数学公式渲染" {...register('math')} />
-            <FormCheckbox label="练习题模式" id="quiz" description="启用练习题交互" {...register('quiz')} />
+            <FormCheckbox label="隐藏文章摘要与相关推荐" id="excludeFromSummary" description="前台不显示本篇摘要或相关推荐；手动生成智能内容时也会跳过本篇" {...register('excludeFromSummary')} />
+            <FormCheckbox label="数学公式（LaTeX）" id="math" description="为本篇文章加载 KaTeX 公式样式" {...register('math')} />
+            <FormCheckbox label="练习题模式" id="quiz" description="仅为本篇文章启用 Markdown 练习题交互" {...register('quiz')} />
           </div>
         </div>
       )}
