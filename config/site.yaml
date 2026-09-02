@@ -109,10 +109,6 @@ navigation:
     nameKey: nav.home
     path: /
     icon: ri:home-heart-fill
-  - name: 周刊
-    nameKey: nav.weekly
-    path: /weekly
-    icon: ri:newspaper-line
   - name: 文章
     nameKey: nav.posts
     icon: ri:quill-pen-ai-fill
