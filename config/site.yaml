@@ -47,7 +47,7 @@ featuredCategories:
   - link: DS
     label: 数据结构
     image: /img/cover/15.webp
-    description: 记录学习算法
+    description: 记录学习算法的过程
   - link: Software-Development
     label: 软件制作
     image: /img/cover/16.webp
