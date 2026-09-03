@@ -34,6 +34,7 @@ categoryMap:
   计算机网络: CN
   计算机组成原理: CO
   软件制作: Software-Development
+  英语: English
 featuredCategories:
   - link: Learning-insights
     label: 学习心得
