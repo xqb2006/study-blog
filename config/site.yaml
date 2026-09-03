@@ -52,6 +52,10 @@ featuredCategories:
     label: 软件制作
     image: /img/cover/16.webp
     description: 用于分享个人原创或基于他人开源项目进行二次修改的软件作品
+  - link: English
+    label: 英语
+    image: /img/cover/1.webp
+    description: 在不断的学习英语
 featuredSeries:
   - slug: Learning-insights
     categoryName: 学习心得
