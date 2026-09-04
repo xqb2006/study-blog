@@ -496,6 +496,18 @@ export interface BuildSyncSummary {
   message: string;
 }
 
+export type DeploymentState = 'queued' | 'building' | 'success' | 'failure' | 'unknown';
+
+export interface DeploymentStatusResponse {
+  state: DeploymentState;
+  commitSha: string;
+  commitUrl?: string;
+  detailsUrl?: string;
+  startedAt?: string;
+  completedAt?: string;
+  message: string;
+}
+
 export interface RuntimeSyncSummary {
   success: boolean;
   path: string;

@@ -246,7 +246,7 @@ export function PostEditor({ postId, onClose, onSaved }: PostEditorProps) {
         if (response.buildSync) {
           window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: response.buildSync }));
         }
-        toast.success(`文章已保存；${response.buildSync?.message || '发布同步已请求'}`);
+        toast.success(`文章已保存并提交到 GitHub；${response.buildSync?.message || '发布同步已请求'}`);
         onSaved?.();
         return true;
       } catch (err) {

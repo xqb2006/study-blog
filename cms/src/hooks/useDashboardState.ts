@@ -114,7 +114,7 @@ export function useDashboardState(): UseDashboardStateResult {
     async (postId: string) => {
       try {
         const result = await toggleDraft(postId);
-        toast.success(`${result.draft ? '已设为草稿' : '已发布文章'}；${result.buildSync?.message || '发布同步已请求'}`);
+        toast.success(`${result.draft ? '文章已设为草稿' : '文章已提交发布'}；${result.buildSync?.message || '发布同步已请求'}`);
         if (result.buildSync) window.dispatchEvent(new CustomEvent('cms:build-sync-requested', { detail: result.buildSync }));
         fetchData();
       } catch (err) {

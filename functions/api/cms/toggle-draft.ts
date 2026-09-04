@@ -21,7 +21,9 @@ export const onRequestPost = async (context: any) => {
         started: true,
         queued: true,
         failed: false,
-        message: draft ? '文章已设为草稿，Cloudflare Pages 正在更新。' : '文章已发布，Cloudflare Pages 正在部署。',
+        message: draft
+          ? '文章已设为草稿并提交到 GitHub，正在等待 Cloudflare Pages 更新。'
+          : '文章已提交发布到 GitHub，正在等待 Cloudflare Pages 部署。',
       },
     });
   } catch (error) {

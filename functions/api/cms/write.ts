@@ -16,7 +16,7 @@ export const onRequestPost = async (context: any) => {
     return json({
       success: true,
       postId,
-      buildSync: { started: true, queued: true, failed: false, message: '文章已提交，Cloudflare Pages 正在自动部署。' },
+      buildSync: { started: true, queued: true, failed: false, message: '文章已提交到 GitHub，正在等待 Cloudflare Pages 部署。' },
     });
   } catch (error) {
     if (error instanceof Response) return error;

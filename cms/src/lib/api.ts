@@ -13,6 +13,7 @@ import type {
   DeleteCategoryMappingResponse,
   DeleteMediaResponse,
   DeletePostResponse,
+  DeploymentStatusResponse,
   ImportMarkdownParams,
   ImportMarkdownResponse,
   ListPostsParams,
@@ -129,6 +130,20 @@ export async function readPost(postId: string): Promise<ReadPostResult> {
   }
 
   return data as ReadPostResult;
+}
+
+/**
+ * Read the latest Cloudflare Pages deployment status reported to GitHub.
+ */
+export async function getDeploymentStatus(): Promise<DeploymentStatusResponse> {
+  const response = await fetch('/api/cms/deployment-status', { cache: 'no-store' });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to read deployment status: ${response.status}`);
+  }
+
+  return await response.json();
 }
 
 /**

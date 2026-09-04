@@ -7,7 +7,7 @@
 import { AppIcon } from '@/components/ui/app-icon';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import {
   AnnouncementsPanel,
   BgmPanel,
@@ -28,14 +28,16 @@ import {
 import { AmbientCanvas } from '@/components/AmbientCanvas';
 import { Button } from '@/components/ui/button';
 import { type StatusFilter, type Tab, useDashboardState } from '@/hooks';
-import { getSiteSettings } from '@/lib/api';
+import { getDeploymentStatus, getSiteSettings } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import type { RuntimeSyncSummary, SiteSettings } from '@/types';
+import type { DeploymentStatusResponse, RuntimeSyncSummary, SiteSettings } from '@/types';
 
 const BLOG_URL = 'http://localhost:4321';
 const BLOG_FALLBACK_AVATAR = `${BLOG_URL}/img/avatar.webp`;
 const COMPACT_RECENT_POSTS_DISPLAY = 3;
 const COMPACT_CATEGORY_DISPLAY = 6;
+const DEPLOYMENT_POLL_INTERVAL_MS = 5000;
+const DEPLOYMENT_MAX_POLL_ATTEMPTS = 24;
 
 type NavItem = { id: Tab; label: string; icon: string; description: string };
 
@@ -114,6 +116,26 @@ function formatSyncTime(value?: string) {
   return formatShortDate(value);
 }
 
+function getDeploymentPresentation(status: DeploymentStatusResponse | null) {
+  switch (status?.state) {
+    case 'success':
+      return { icon: 'circle-check', iconClassName: 'status-success', title: '最新版本已上线', message: status.message };
+    case 'failure':
+      return { icon: 'circle-x', iconClassName: 'status-failed', title: 'Cloudflare 部署失败', message: status.message };
+    case 'building':
+      return { icon: 'loader-2', iconClassName: 'status-running', title: 'Cloudflare 正在构建', message: status.message };
+    case 'queued':
+      return { icon: 'clock-3', iconClassName: 'status-running', title: '等待 Cloudflare 构建', message: status.message };
+    default:
+      return {
+        icon: 'circle-help',
+        iconClassName: 'status-unknown',
+        title: '等待部署状态',
+        message: '文章、图片和设置保存后会先提交到 GitHub，再由 Cloudflare Pages 自动构建。',
+      };
+  }
+}
+
 function isSiteSettings(value: unknown): value is SiteSettings {
   return Boolean(value && typeof value === 'object' && 'site' in value);
 }
@@ -127,6 +149,7 @@ function AppContent() {
   });
   const [runtimeSync, setRuntimeSync] = useState<RuntimeSyncSummary | null>(null);
   const [configuredCategoryMap, setConfiguredCategoryMap] = useState<Record<string, string>>({});
+  const [deploymentStatus, setDeploymentStatus] = useState<DeploymentStatusResponse | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const {
     activeTab,
@@ -190,6 +213,63 @@ function AppContent() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: number | undefined;
+
+    const pollDeployment = async (attempt: number, notify: boolean): Promise<void> => {
+      try {
+        const status = await getDeploymentStatus();
+        if (!isMounted) return;
+        setDeploymentStatus(status);
+
+        if (status.state === 'success') {
+          if (notify) toast.success('Cloudflare 已完成部署，前台网站已更新。');
+          return;
+        }
+
+        if (status.state === 'failure') {
+          if (notify) {
+            toast.error('Cloudflare 部署失败，文章尚未上线。', {
+              action: status.detailsUrl
+                ? { label: '查看部署日志', onClick: () => window.open(status.detailsUrl, '_blank', 'noopener,noreferrer') }
+                : undefined,
+            });
+          }
+          return;
+        }
+
+        if (attempt >= DEPLOYMENT_MAX_POLL_ATTEMPTS) {
+          if (notify) toast.message('Cloudflare 仍未返回部署结果，请稍后在“博客前台发布”面板查看状态。');
+          return;
+        }
+
+        timeoutId = window.setTimeout(() => {
+          void pollDeployment(attempt + 1, notify);
+        }, DEPLOYMENT_POLL_INTERVAL_MS);
+      } catch (error) {
+        if (notify && isMounted) {
+          toast.error(error instanceof Error ? error.message : '无法读取 Cloudflare 部署状态。');
+        }
+      }
+    };
+
+    const handleBuildSyncRequested = () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      toast.message('内容已提交到 GitHub，正在等待 Cloudflare Pages 构建完成。');
+      void pollDeployment(0, true);
+    };
+
+    window.addEventListener('cms:build-sync-requested', handleBuildSyncRequested);
+    void pollDeployment(0, false);
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) window.clearTimeout(timeoutId);
+      window.removeEventListener('cms:build-sync-requested', handleBuildSyncRequested);
+    };
+  }, []);
+
   if (editingPostId) {
     return <PostEditor postId={editingPostId} onClose={handleEditorClose} onSaved={handleEditorSaved} />;
   }
@@ -213,6 +293,7 @@ function AppContent() {
     { label: '总文章数', value: formatCount(totalPosts), delta: '打开文章书房', icon: 'file-text', tone: 'cyan', action: () => openPostsView('all') },
     { label: '草稿箱', value: formatCount(draftPosts), delta: '查看草稿文章', icon: 'draft', tone: 'purple', action: () => openPostsView('draft') },
   ];
+  const deploymentPresentation = getDeploymentPresentation(deploymentStatus);
 
   const quickActions = [
     { label: '写新文章', description: '打开文章编辑入口', icon: 'plus-circle', action: () => setIsCreateDialogOpen(true) },
@@ -381,12 +462,12 @@ function AppContent() {
                                 <h2>博客前台发布</h2>
                               </div>
                               <div className="sakura-sync-summary">
-                                <span className="sakura-sync-icon status-unknown">
-                                  <AppIcon name="circle-help" className="size-7" />
+                                <span className={cn('sakura-sync-icon', deploymentPresentation.iconClassName)}>
+                                  <AppIcon name={deploymentPresentation.icon} className={cn('size-7', deploymentStatus?.state === 'building' && 'animate-spin')} />
                                 </span>
                                 <div>
-                                  <strong>Cloudflare 自动部署</strong>
-                                  <p>文章、图片和设置保存后会提交到 GitHub。Cloudflare Pages 会自动构建；真实进度和日志请在 Cloudflare 控制台查看。</p>
+                                  <strong>{deploymentPresentation.title}</strong>
+                                  <p>{deploymentPresentation.message}</p>
                                 </div>
                               </div>
                               <div className="sakura-sync-grid">
@@ -400,6 +481,13 @@ function AppContent() {
                                   <strong>{runtimeSync?.success ? '已可用' : '待生成'}</strong>
                                   <small>{runtimeSync?.updatedAt ? formatSyncTime(runtimeSync.updatedAt) : runtimeSync?.message || '资料保存后生成'}</small>
                                 </button>
+                                {deploymentStatus?.detailsUrl && (
+                                  <button type="button" onClick={() => window.open(deploymentStatus.detailsUrl, '_blank', 'noopener,noreferrer')}>
+                                    <span>部署日志</span>
+                                    <strong>{deploymentStatus.state === 'failure' ? '查看失败原因' : '查看构建详情'}</strong>
+                                    <small>{deploymentStatus.commitSha.slice(0, 7)}</small>
+                                  </button>
+                                )}
                               </div>
                             </section>
 

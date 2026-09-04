@@ -37,6 +37,16 @@ export function githubRawFileUrl(context: any, filePath: string): string {
   return `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/${encodeURIComponent(branch)}/${encodedPath}`;
 }
 
+export type DeploymentStatus = {
+  state: 'queued' | 'building' | 'success' | 'failure' | 'unknown';
+  commitSha: string;
+  commitUrl?: string;
+  detailsUrl?: string;
+  startedAt?: string;
+  completedAt?: string;
+  message: string;
+};
+
 export function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -144,6 +154,65 @@ async function githubFetch(context: any, path: string, init: RequestInit = {}): 
     throw new Error(`GitHub 服务请求失败（HTTP ${response.status}），请稍后重试。`);
   }
   return response.status === 204 ? null : response.json();
+}
+
+export async function getLatestDeploymentStatus(context: any): Promise<DeploymentStatus> {
+  const { branch } = githubConfig(context);
+  const commit = await githubFetch(context, `/commits/${encodeURIComponent(branch)}`);
+  const commitSha = String(commit.sha || '');
+  if (!commitSha) throw new Error('无法读取最新 GitHub 提交。');
+
+  const checks = await githubFetch(context, `/commits/${commitSha}/check-runs`);
+  const cloudflareCheck = Array.isArray(checks.check_runs)
+    ? checks.check_runs.find((check: { name?: string }) => check.name === 'Cloudflare Pages')
+    : undefined;
+
+  const base = {
+    commitSha,
+    commitUrl: typeof commit.html_url === 'string' ? commit.html_url : undefined,
+  };
+
+  if (!cloudflareCheck) {
+    return {
+      ...base,
+      state: 'queued',
+      message: '内容已提交到 GitHub，正在等待 Cloudflare Pages 创建部署任务。',
+    };
+  }
+
+  const detailsUrl = typeof cloudflareCheck.details_url === 'string' ? cloudflareCheck.details_url : undefined;
+  const startedAt = typeof cloudflareCheck.started_at === 'string' ? cloudflareCheck.started_at : undefined;
+  const completedAt = typeof cloudflareCheck.completed_at === 'string' ? cloudflareCheck.completed_at : undefined;
+
+  if (cloudflareCheck.status !== 'completed') {
+    return {
+      ...base,
+      state: 'building',
+      detailsUrl,
+      startedAt,
+      message: 'Cloudflare Pages 正在构建最新版本，请稍候。',
+    };
+  }
+
+  if (cloudflareCheck.conclusion === 'success') {
+    return {
+      ...base,
+      state: 'success',
+      detailsUrl,
+      startedAt,
+      completedAt,
+      message: '最新内容已由 Cloudflare Pages 部署到前台网站。',
+    };
+  }
+
+  return {
+    ...base,
+    state: 'failure',
+    detailsUrl,
+    startedAt,
+    completedAt,
+    message: 'Cloudflare Pages 构建失败，GitHub 中的内容已保存，但前台仍显示上一次成功部署的版本。',
+  };
 }
 
 export async function getFile(context: any, filePath: string): Promise<{ content: string; sha: string }> {
