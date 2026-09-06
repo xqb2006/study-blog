@@ -102,7 +102,8 @@ const remarkPlugins = [];
     contentConfig.enableShokaContainers !== false ||
     contentConfig.enableShokaHexoTags !== false ||
     contentConfig.enableShokaEffects !== false;
-  if (needsPreprocess) {
+  const needsMathDelimiterNormalization = contentConfig.enableMath !== false;
+  if (needsPreprocess || needsMathDelimiterNormalization) {
     remarkPlugins.push([
       remarkShokaPreprocess,
       {
@@ -111,6 +112,7 @@ const remarkPlugins = [];
         enableSuperSub: contentConfig.enableShokaEffects !== false,
         enableMath: contentConfig.enableMath !== false,
         enableEncryptedBlock: contentConfig.enableEncryptedBlock ?? false,
+        enableShokaPreprocess: needsPreprocess,
       },
     ]);
   }

@@ -22,6 +22,7 @@ import remarkMath from 'remark-math';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import type { VFile } from 'vfile';
+import { normalizeLatexMathDelimiters } from './math-delimiters';
 import { preprocessShokaSyntax } from './shoka-preprocessor';
 
 interface RemarkShokaPreprocessOptions {
@@ -30,6 +31,7 @@ interface RemarkShokaPreprocessOptions {
   enableSuperSub?: boolean;
   enableMath?: boolean;
   enableEncryptedBlock?: boolean;
+  enableShokaPreprocess?: boolean;
 }
 
 export function remarkShokaPreprocess(options?: RemarkShokaPreprocessOptions) {
@@ -47,11 +49,15 @@ export function remarkShokaPreprocess(options?: RemarkShokaPreprocessOptions) {
     const raw = String(file.value);
     if (!raw) return;
 
-    const processed = preprocessShokaSyntax(raw, {
-      enableContainers: options?.enableContainers,
-      enableHexoTags: options?.enableHexoTags,
-      enableSuperSub: options?.enableSuperSub,
-    });
+    const normalizedMath = options?.enableMath !== false ? normalizeLatexMathDelimiters(raw) : raw;
+    const processed =
+      options?.enableShokaPreprocess === false
+        ? normalizedMath
+        : preprocessShokaSyntax(normalizedMath, {
+            enableContainers: options?.enableContainers,
+            enableHexoTags: options?.enableHexoTags,
+            enableSuperSub: options?.enableSuperSub,
+          });
 
     // If no changes, skip re-parse
     if (processed === raw) return;
