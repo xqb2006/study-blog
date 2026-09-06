@@ -43,17 +43,38 @@ function normalizeDisplayMath(segment: string): string {
     );
 }
 
+function normalizeLegacyDisplayMath(segment: string): string {
+  return segment.replace(
+    /(^|\r?\n)([\t ]*)\[[\t ]*\\[\t ]*\r?\n([\s\S]*?)\r?\n[\t ]*\][\t ]*(?=\r?\n|$)/g,
+    (_match, lineStart: string, indentation: string, expression: string) => {
+      const normalizedExpression = expression.replace(/\\[\t ]*(?=\r?\n|$)/g, '');
+      return `${lineStart}${indentation}$$\n${normalizedExpression}\n${indentation}$$`;
+    },
+  );
+}
+
 function normalizeInlineMath(segment: string): string {
   return segment.replace(/(^|[^\\])\\\(([^\r\n]+?)\\\)/g, (_match, prefix: string, expression: string) => {
     return `${prefix}$${expression}$`;
   });
 }
 
+function normalizeLegacyInlineMath(segment: string): string {
+  return segment.replace(/\(([^()\r\n]*\\[A-Za-z]+[^()\r\n]*)\)/g, (_match, expression: string) => {
+    return `$${expression}$`;
+  });
+}
+
 /**
- * Converts `\(...\)` to `$...$` and `\[...\]` to `$$...$$`.
+ * Converts common and legacy LaTeX delimiters to remark-math syntax.
+ *
+ * In addition to `\(...\)` and `\[...\]`, older CMS content may contain
+ * display formulas written as `[\` / `]`, with a trailing slash on each line.
  * Code fences, inline code, and formulas already using dollar delimiters are
  * deliberately left untouched.
  */
 export function normalizeLatexMathDelimiters(source: string): string {
-  return transformOutsideProtectedRegions(source, (segment) => normalizeInlineMath(normalizeDisplayMath(segment)));
+  return transformOutsideProtectedRegions(source, (segment) =>
+    normalizeLegacyInlineMath(normalizeInlineMath(normalizeLegacyDisplayMath(normalizeDisplayMath(segment)))),
+  );
 }
